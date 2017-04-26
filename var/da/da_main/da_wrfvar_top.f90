@@ -66,7 +66,7 @@ module da_wrfvar_top
    use da_varbc, only : da_varbc_init,da_varbc_update
 #endif
    use da_reporting, only : message, da_warning, da_error, da_message
-   use da_setup_structures, only : da_setup_obs_structures, da_wrtie_vp, &
+   use da_setup_structures, only : da_setup_obs_structures, da_write_vp, &
       da_setup_background_errors,da_setup_flow_predictors, &
       da_setup_cv, da_scale_background_errors, da_scale_background_errors_cv3
    use da_setup_structures, only : da_setup_flow_predictors_para_read_opt1
