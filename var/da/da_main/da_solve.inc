@@ -934,7 +934,7 @@
       end if
 
       ! [8.7] Write out diagnostics
-
+	  
       call da_write_diagnostics (it, grid, num_qcstat_conv, ob, iv, re, y, j)
 
       ! Write "clean" QCed observations if requested:
