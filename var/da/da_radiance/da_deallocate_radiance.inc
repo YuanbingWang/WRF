@@ -21,7 +21,6 @@
          deallocate (satinfo(i) % ichan)
          deallocate (satinfo(i) % iuse)
          deallocate (satinfo(i) % error)
-         deallocate (satinfo(i) % error_cld)
          deallocate (satinfo(i) % polar)
 
          deallocate (satinfo(i) % scanbias) 
@@ -29,6 +28,12 @@
          deallocate (satinfo(i) % bcoef)
          deallocate (satinfo(i) % bcoef0)
          deallocate (satinfo(i) % error_std)
+		 
+		 if ( crtm_cloud ) then
+			deallocate (satinfo(i) % error_cld)
+			deallocate (satinfo(i) % c0_clr)
+            deallocate (satinfo(i) % c1_cld)   
+		 end if
 
          deallocate (ob%instid(i) % ichan)
          deallocate (iv%instid(i) % ichan)
