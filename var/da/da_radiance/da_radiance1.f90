@@ -17,7 +17,7 @@ module da_radiance1
       stdout,myproc,qc_good,num_fgat_time,qc_bad, &
       use_error_factor_rad,biasprep_unit,obs_qc_pointer, filename_len, &
       print_detail_rad, rtm_option, trace_use_dull, &
-      rtm_option_rttov,rtm_option_crtm, radiance, only_sea_rad, &
+      rtm_option_rttov,rtm_option_crtm, radiance, only_sea_rad, use_surf_qc,&
       global, gas_constant, gravity, monitor_on,kts,kte,use_rttov_kmatrix, &
       use_pseudo_rad, pi, t_triple, crtm_cloud, DT_cloud_model,write_jacobian, &
       use_crtm_kmatrix,use_clddet_mmr, use_satcv, cv_size_domain, &

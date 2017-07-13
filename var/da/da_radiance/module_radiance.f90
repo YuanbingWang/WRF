@@ -146,6 +146,8 @@ module module_radiance
       integer, pointer   :: iuse (:)      ! usage flag (-1: not use) from radiance info file
       real   , pointer   :: error(:)      ! error Standard Deviation from radiance info file
       real   , pointer   :: error_cld(:)  ! error Standard Deviation for cloudy radiance from radiance info file
+	  real   , pointer   :: c0_clr(:)     ! cloud amount for clear sky radiance from radiance info file
+	  real   , pointer   :: c1_cld(:)     ! cloud amount for cloudy sky radiance from radiance info file
       real   , pointer   :: polar(:)      ! polarisation (0:ver; 1:hori) from radiance info file
       real   , pointer   :: error_factor(:) ! error tuning factor ! from error tuning file
      ! new air mass bias correction coefs.

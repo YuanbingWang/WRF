@@ -3,6 +3,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
    !---------------------------------------------------------------------------
    ! Purpose: perform quality control for ahi  data.
    ! To be developed: built in cloud_detection method 
+   ! Created by Yuanbing Wang NUIST/2016.10
    !---------------------------------------------------------------------------
 
    implicit none
@@ -24,7 +25,9 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
    real      :: inv_grosscheck				
 
    character(len=30)  :: filename
-   real      :: c37_mean
+   real      :: cloud_amount(nchan)
+   real      :: c1_cld,c0_clr
+   real      :: fe,ft
 
    if (trace_use) call da_trace_entry("da_qc_ahi")
 
@@ -42,13 +45,6 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
    do n= iv%instid(i)%info%n1,iv%instid(i)%info%n2
       if (iv%instid(i)%info%proc_domain(1,n)) &
             num_proc_domain = num_proc_domain + 1
-
-      if ( crtm_cloud ) then
-         ! calculate c37_mean
-         c37_mean = 1.0-(ob%instid(i)%tb(11,n)-ob%instid(i)%tb(12,n)+  &
-                    iv%instid(i)%tb_xb(11,n)-iv%instid(i)%tb_xb(12,n))/ &
-                    (2.0*(iv%instid(i)%tb_xb_clr(11,n)-iv%instid(i)%tb_xb_clr(12,n)))
-      end if
 
       !  0.0  initialise QC by flags assuming good obs
       !-----------------------------------------------------------------
@@ -132,34 +128,104 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
          end do ! nchan
 
       else !crtm_cloud
-         ! symmetric error model, Geer and Bauer (2011)
+         ! symmetric error model, Geer and Bauer (2011); Okamoto (2014,2017)
          do k = 1, nchan
-            if (c37_mean.lt.0.05) then
-               iv%instid(i)%tb_error(k,n)= satinfo(i)%error_std(k)
-            else if (c37_mean.ge.0.05.and.c37_mean.lt.0.5) then
+			! calculate cloud_amount
+			cloud_amount(k) = (abs(iv%instid(i)%tb_xb(k,n)-iv%instid(i)%tb_xb_clr(k,n)) + &
+                               abs(ob%instid(i)%tb(k,n)-iv%instid(i)%tb_xb_clr(k,n))) * 0.5	
+					
+            if(cloud_amount(k) .lt. satinfo(i)%c0_clr(k))then
+               iv%instid(i)%tb_error(k,n) = satinfo(i)%error_std(k)
+            else if(cloud_amount(k).ge.satinfo(i)%c0_clr(k).and.cloud_amount(k).lt.satinfo(i)%c1_cld(k))then
                iv%instid(i)%tb_error(k,n)= satinfo(i)%error_std(k)+ &
-                  (c37_mean-0.05)*(satinfo(i)%error_cld(k)-satinfo(i)%error_std(k))/(0.5-0.05)
+                  (cloud_amount(k)-satinfo(i)%c0_clr(k))* &
+				  (satinfo(i)%error_cld(k)-satinfo(i)%error_std(k))/ &
+				  (satinfo(i)%c1_cld(k)-satinfo(i)%c0_clr(k))
             else
                iv%instid(i)%tb_error(k,n)= satinfo(i)%error_cld(k)
             end if
+			
          end do ! nchan
-
       end if
+	  
+      !  5.0 check surface conditions (Qin and Zou et al. 2017)
+      !-----------------------------------------------------------------
+      ! assigning obs errors
+	  if ( use_surf_qc ) then
+	  
+		 if ( isflg == 0 .or. isflg == 2 ) then
+			fe=0.01
+		 else
+			fe=0.02
+		 end if
+		 
+		 if ( isflg == 0) then
+			ft=0.5
+		 else if(isflg == 2) then
+			ft=2.0
+		 else if(isflg == 1 .or. isflg == 3) then
+			ft=3.0	
+		 else
+			ft=5.0
+		 end if		 
+		 
+         do k = 1, nchan
+            if (use_error_factor_rad) then
+			
+            else if (iv%instid(i)%info%elv(n)>2000.0) then
+					iv%instid(i)%tb_error(k,n)=( iv%instid(i)%tb_error(k,n)+ &
+					abs(iv%instid(i)%emiss(k,n))*fe + abs(iv%instid(i)%ts(n))*ft )* &
+					iv%instid(i)%info%elv(n)/2000.0  
+            end if
+         end do ! nchan
+	  end if
 
-      !  5.0 check innovation
+      !  6.0 check innovation
       !-----------------------------------------------------------------
       if (.not. crtm_cloud ) then
          ! absolute departure check
          do k = 1, nchan
             inv_grosscheck = 8.0
             if (use_satcv(2)) inv_grosscheck = 100.0
-            if (abs(iv%instid(i)%tb_inv(k,n)) > inv_grosscheck) then
+            !if (abs(iv%instid(i)%tb_inv(k,n)) > inv_grosscheck) then
+             !   iv%instid(i)%tb_qc(k,n)  = qc_bad
+              !  if (iv%instid(i)%info%proc_domain(1,n)) &
+               !         nrej_omb_abs(k) = nrej_omb_abs(k) + 1
+            !end if	
+
+            if ( k == 2 .or. k == 3) then
+               if (abs(iv%instid(i)%tb_inv(k,n)) > 3.0) then
+                  iv%instid(i)%tb_qc(k,n)  = qc_bad
+                  if (iv%instid(i)%info%proc_domain(1,n)) &
+                        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
+               end if
+            else if ( k == 4 ) then
+               if (abs(iv%instid(i)%tb_inv(k,n)) > 2.4) then
+                  iv%instid(i)%tb_qc(k,n)  = qc_bad
+                  if (iv%instid(i)%info%proc_domain(1,n)) &
+                        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
+               end if
+            else
+               if (abs(iv%instid(i)%tb_inv(k,n)) > 5.0) then
+                  iv%instid(i)%tb_qc(k,n)  = qc_bad
+                  if (iv%instid(i)%info%proc_domain(1,n)) &
+                        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
+               end if
+            end if
+			
+         end do ! nchan
+      end if
+	  
+	  if ( crtm_cloud ) then 
+	     !cloud_dependent qc
+         do k = 1, nchan
+            if (cloud_amount(k)>3.0 .and. abs(iv%instid(i)%tb_inv(k,n))>cloud_amount(k)*1.8) then
                 iv%instid(i)%tb_qc(k,n)  = qc_bad
                 if (iv%instid(i)%info%proc_domain(1,n)) &
                         nrej_omb_abs(k) = nrej_omb_abs(k) + 1
-            end if			
-         end do ! nchan
-      end if
+            end if	
+		 end do
+      end if			
 
       do k = 1, nchan
          ! relative departure check
