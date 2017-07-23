@@ -419,7 +419,7 @@
        IF ( ierr .NE. 0 ) THEN
           CALL wrf_debug ( 0, '---- ERROR: Nest start locations do not match: namelist.input vs gridded input file' )
           count_fatal_error = count_fatal_error + 1
-          !CALL wrf_error_fatal( 'Nest start locations do not match: namelist.input vs gridded input file' ) !!!tmp by wyb
+          !!CALL wrf_error_fatal( 'Nest start locations do not match: namelist.input vs gridded input file' ) !!!tmp by wyb
        END IF
     END IF
 #endif
