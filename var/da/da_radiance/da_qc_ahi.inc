@@ -185,33 +185,33 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
       if (.not. crtm_cloud ) then
          ! absolute departure check
          do k = 1, nchan
-            inv_grosscheck = 8.0
+            inv_grosscheck = 15.0
             if (use_satcv(2)) inv_grosscheck = 100.0
-            !if (abs(iv%instid(i)%tb_inv(k,n)) > inv_grosscheck) then
-             !   iv%instid(i)%tb_qc(k,n)  = qc_bad
-              !  if (iv%instid(i)%info%proc_domain(1,n)) &
-               !         nrej_omb_abs(k) = nrej_omb_abs(k) + 1
-            !end if	
+            if (abs(iv%instid(i)%tb_inv(k,n)) > inv_grosscheck) then
+                iv%instid(i)%tb_qc(k,n)  = qc_bad
+                if (iv%instid(i)%info%proc_domain(1,n)) &
+                        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
+            end if	
 
-            if ( k == 2 .or. k == 3) then
-               if (abs(iv%instid(i)%tb_inv(k,n)) > 3.0) then
-                  iv%instid(i)%tb_qc(k,n)  = qc_bad
-                  if (iv%instid(i)%info%proc_domain(1,n)) &
-                        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
-               end if
-            else if ( k == 4 ) then
-               if (abs(iv%instid(i)%tb_inv(k,n)) > 2.4) then
-                  iv%instid(i)%tb_qc(k,n)  = qc_bad
-                  if (iv%instid(i)%info%proc_domain(1,n)) &
-                        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
-               end if
-            else
-               if (abs(iv%instid(i)%tb_inv(k,n)) > 5.0) then
-                  iv%instid(i)%tb_qc(k,n)  = qc_bad
-                  if (iv%instid(i)%info%proc_domain(1,n)) &
-                        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
-               end if
-            end if
+            !if ( k == 2 .or. k == 3) then
+             !  if (abs(iv%instid(i)%tb_inv(k,n)) > 3.0) then
+              !    iv%instid(i)%tb_qc(k,n)  = qc_bad
+               !   if (iv%instid(i)%info%proc_domain(1,n)) &
+                !        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
+               !end if
+            !else if ( k == 4 ) then
+             !  if (abs(iv%instid(i)%tb_inv(k,n)) > 2.4) then
+              !    iv%instid(i)%tb_qc(k,n)  = qc_bad
+               !   if (iv%instid(i)%info%proc_domain(1,n)) &
+                !        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
+               !end if
+            !else
+             !  if (abs(iv%instid(i)%tb_inv(k,n)) > 5.0) then
+              !    iv%instid(i)%tb_qc(k,n)  = qc_bad
+               !   if (iv%instid(i)%info%proc_domain(1,n)) &
+                !        nrej_omb_abs(k) = nrej_omb_abs(k) + 1
+               !end if
+            !end if
 			
          end do ! nchan
       end if
