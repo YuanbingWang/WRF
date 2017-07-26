@@ -36,7 +36,11 @@ subroutine da_add_flow_dependence_xa_adj (ne, ep, xa, vp, nobwin)
                   alpha = alpha + ep % rn(i,j,k,(nobwin-1)*ensdim_alpha+n) * xa % qrn(i,j,k)
                   alpha = alpha + ep % cw(i,j,k,(nobwin-1)*ensdim_alpha+n) * xa % qcw(i,j,k)
 #endif
-                  alpha = alpha + ep % v4(i,j,k,(nobwin-1)*ensdim_alpha+n) * xa % q(i,j,k)
+                  if ( cloud_cv_options == 1 ) then
+				     alpha = alpha + ep % v4(i,j,k,(nobwin-1)*ensdim_alpha+n) * xa % qt(i,j,k) ! v4 = qt 
+				  else
+                     alpha = alpha + ep % v4(i,j,k,(nobwin-1)*ensdim_alpha+n) * xa % q(i,j,k) ! v4 = q
+				  end if
                   alpha = alpha + ep % v3(i,j,k,(nobwin-1)*ensdim_alpha+n) * xa % t(i,j,k)
                   alpha = alpha + ep % v2(i,j,k,(nobwin-1)*ensdim_alpha+n) * xa % v(i,j,k)
                   alpha = alpha + ep % v1(i,j,k,(nobwin-1)*ensdim_alpha+n) * xa % u(i,j,k)

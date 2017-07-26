@@ -32,8 +32,13 @@ subroutine da_add_flow_dependence_xa (grid, ne,  ep, vp, nobwin)
                   ! t:
                   grid%xa % t(i,j,k) = grid%xa % t(i,j,k) + alpha * ep % v3(i,j,k,(nobwin-1)*ensdim_alpha+n) ! v3 = t
 
-                  ! q:
-                  grid%xa % q(i,j,k) = grid%xa % q(i,j,k) + alpha * ep % v4(i,j,k,(nobwin-1)*ensdim_alpha+n) ! v4 = q
+                  if ( cloud_cv_options == 1 ) then
+                     ! qt
+					 grid%xa % qt(i,j,k) = grid%xa % qt(i,j,k) + alpha * ep % v4(i,j,k,(nobwin-1)*ensdim_alpha+n) ! v4 = qt
+                  else				  
+				     ! q:
+				     grid%xa % q(i,j,k) = grid%xa % q(i,j,k) + alpha * ep % v4(i,j,k,(nobwin-1)*ensdim_alpha+n) ! v4 = q
+				  end if
 
 #ifdef CLOUD_CV
                   grid%xa%qcw(i,j,k) = grid%xa%qcw(i,j,k) + alpha * ep%cw(i,j,k,(nobwin-1)*ensdim_alpha+n)
