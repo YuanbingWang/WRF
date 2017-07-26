@@ -49,7 +49,11 @@ subroutine da_setup_flow_predictors_para_read_opt1( ix, jy, kz, ne, ep, its, ite
       var(1) = 'u'
       var(2) = 'v'
       var(3) = 't'
-      var(4) = 'q'
+	  if ( cloud_cv_options == 1 ) then
+	     var(4) = 'qt' !using qt for crtm_cloud or use_radar_rf
+	  else
+         var(4) = 'q'
+	  end if
       var(5) = 'ps'
    else                               ! vp space
       var(1) = 'psi'
