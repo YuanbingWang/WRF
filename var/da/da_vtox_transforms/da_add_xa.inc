@@ -14,7 +14,13 @@ subroutine da_add_xa (xa, xa_ens)
    xa % u(:,:,:)   = xa % u(:,:,:)   + xa_ens % u(:,:,:)
    xa % v(:,:,:)   = xa % v(:,:,:)   + xa_ens % v(:,:,:)
    xa % t(:,:,:)   = xa % t(:,:,:)   + xa_ens % t(:,:,:)
-   xa % q(:,:,:)   = xa % q(:,:,:)   + xa_ens % q(:,:,:)
+   if ( cloud_cv_options == 1 ) then
+      ! qt
+      xa % qt(:,:,:)   = xa % qt(:,:,:)   + xa_ens % q(:,:,:)
+   else
+      ! q
+      xa % q(:,:,:)   = xa % q(:,:,:)   + xa_ens % q(:,:,:)
+   end if
 
    if ( alpha_hydrometeors ) then
       xa % qcw(:,:,:) = xa % qcw(:,:,:) + xa_ens % qcw(:,:,:)
