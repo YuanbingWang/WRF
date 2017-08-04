@@ -201,8 +201,7 @@ subroutine da_setup_radiance_structures( grid, ob, iv )
          call da_error(__FILE__,__LINE__,message(1:1))
 #endif
       end if
-      if (use_ahiobs) then
-	  
+      if (use_ahiobs) then	  
         !open the ahi info file 
          open(unit=1990,file='ahi_info',status='old',iostat=iret)
          if(iret /= 0)then
@@ -232,8 +231,7 @@ subroutine da_setup_radiance_structures( grid, ob, iv )
 		 !if (data_format==4) then		 
 			!filename = 'ahi'
 			!call da_read_obs_bufrahi ('ahi   ',iv, filename)
-		 !end if	
-		 
+		 !end if			 
       end if	  
    end if
 
