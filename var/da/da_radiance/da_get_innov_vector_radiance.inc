@@ -52,9 +52,9 @@ subroutine da_get_innov_vector_radiance (it, grid, ob, iv)
       call da_varbc_pred(iv)
 	  
       !varbc coldstart can not be done here when num_fgat_time>1
-      if ( num_fgat_time == 1 ) then
+      !if ( num_fgat_time == 1 ) then
          call da_varbc_coldstart(iv)  
-      end if
+      !end if
 
       call da_varbc_direct(iv)   
 
