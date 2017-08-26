@@ -559,6 +559,8 @@ subroutine da_get_innov_vector_crtm ( it, grid, ob, iv )
             Surface(1)%SensorData%WMO_Satellite_Id  = ChannelInfo(inst)%WMO_Satellite_Id
             Surface(1)%SensorData%WMO_Sensor_Id     = ChannelInfo(inst)%WMO_Sensor_Id
             Surface(1)%SensorData%Tb(1:nchanl)      = ob%instid(inst)%tb(1:nchanl,n)
+			if(use_pseudo_rad .and. trim(crtm_sensor_name(rtminit_sensor(inst)))=='ahi') &
+			   Surface(1)%SensorData%Tb(1:nchanl) = 1.0			
          end if
 
          ! user emissivity options
@@ -674,12 +676,13 @@ subroutine da_get_innov_vector_crtm ( it, grid, ob, iv )
       
             if (use_pseudo_rad .or. use_simulated_rad) then ! input is innovation
               ob%instid(inst)%tb(k,n) = missing_r
-	      if ( iv%instid(inst)%tb_inv(k,n) > missing_r ) &
+	          if ( iv%instid(inst)%tb_inv(k,n) > missing_r ) &
                 ob%instid(inst)%tb(k,n) = RTSolution(k,1)%Brightness_Temperature + iv%instid(inst)%tb_inv(k,n)
+			  write(*,*),'simulated pseudo single radiance',ob%instid(inst)%tb(k,n)
             else
                if ( iv%instid(inst)%tb_inv(k,n) > missing_r ) & 
                   iv%instid(inst)%tb_inv(k,n) = ob%instid(inst)%tb(k,n) - iv%instid(inst)%tb_xb(k,n)	    
-	    end if
+	        end if
 
             if (use_crtm_kmatrix) then
                ! surface Jacobian
