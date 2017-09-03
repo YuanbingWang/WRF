@@ -223,7 +223,10 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
                 iv%instid(i)%tb_qc(k,n)  = qc_bad
                 if (iv%instid(i)%info%proc_domain(1,n)) &
                         nrej_omb_abs(k) = nrej_omb_abs(k) + 1
-            end if	
+            end if
+            if (k==7) then		 
+			   if (iv%instid(i)%tb_xb(k,n) < 230.0) iv%instid(i)%tb_qc(:,n)  = qc_bad
+		    end if				
 		 end do
       end if			
 
