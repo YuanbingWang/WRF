@@ -145,6 +145,16 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
                iv%instid(i)%tb_error(k,n)= satinfo(i)%error_cld(k)
             end if
 			
+	   !cloud detection for crtm_cloud, Fuqing Zhang et al.(GRL,2016); TBD by Yuanbing 	      
+		   !if (ob%instid(i)%tb(8,n)<285) then
+		      !iv%instid(i)%tb_qc(3,n) = qc_bad
+			  !iv%instid(i)%tb_qc(4,n) = qc_bad
+		   !else if(ob%instid(i)%tb(8,n)>292) then
+		      ! clear sky
+		   !else
+		      !iv%instid(i)%tb_qc(4,n) = qc_bad
+		   !end if			
+			
          end do ! nchan
       end if
 	  
