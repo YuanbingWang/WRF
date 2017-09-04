@@ -44,7 +44,7 @@ module da_radiance
       use_ssmisobs,use_iasiobs,use_seviriobs,use_filtered_rad,print_detail_rad,stderr, mw_emis_sea, &
       rtminit_print, rttov_scatt,comm,root,ierr,biasprep, qc_rad, num_procs, &
       tovs_min_transfer,use_error_factor_rad,num_fgat_time,stdout,trace_use, &
-      qc_good, qc_bad,myproc,biascorr,thinning,thinning_mesh, &
+      qc_good, qc_bad,myproc,biascorr,thinning,thinning_mesh, cld_detec_ahi, &
       rad_monitoring, monitor_on, kts, kte, kms, kme, calc_weightfunc, &
       use_mwtsobs, use_mwhsobs, use_atmsobs, use_amsr2obs, use_ahiobs, &
       use_hirs4obs, use_mhsobs,bufr_year, bufr_month,bufr_day,bufr_hour, &

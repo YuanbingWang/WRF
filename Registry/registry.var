@@ -398,6 +398,7 @@ rconfig   logical   use_rttov_kmatrix       namelist,wrfvar14  1  .false.  - "us
 rconfig   logical   crtm_cloud              namelist,wrfvar14  1  .false.  - "crtm_cloud"              ""  ""
 rconfig   logical   only_sea_rad            namelist,wrfvar14  1  .false.  - "only_sea_rad"            ""  ""
 rconfig   logical   use_surf_qc             namelist,wrfvar14  1  .false.  - "use_surf_qc"             ""  ""
+rconfig   logical   cld_detec_ahi           namelist,wrfvar14  1  .false.  - "cld_detec_ahi"           ""  ""
 rconfig   logical   use_pseudo_rad          namelist,wrfvar14  1  .false.  - "use_pseudo_rad"          ""  ""
 rconfig   integer   pseudo_rad_platid       namelist,wrfvar14  1  1        - "pseudo_rad_platid"       ""  ""
 rconfig   integer   pseudo_rad_satid        namelist,wrfvar14  1 16        - "pseudo_rad_satid"        ""  ""
