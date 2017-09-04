@@ -25,7 +25,7 @@ module da_rttov
       rtminit_nsensor,rtminit_sensor,filename_len,read_biascoef,analysis_date, &
       time_window_max,time_window_min, kts,kte,kms,kme, &
       rtm_option_rttov,use_rttov_kmatrix,rtm_option_crtm, gravity, &
-      print_detail_rad,stderr, mw_emis_sea, &
+      print_detail_rad,stderr, mw_emis_sea, cld_detec_ahi, &
       rtminit_print, rttov_scatt,comm,ierr,biasprep, qc_rad, &
       num_fgat_time,stdout,trace_use, use_error_factor_rad, &
       qc_good, qc_bad,myproc,biascorr, global,ims,ime,jms,jme, &

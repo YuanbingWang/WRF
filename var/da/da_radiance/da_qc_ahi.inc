@@ -15,7 +15,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
    type (iv_type), intent(inout)   :: iv         ! O-B structure.
 
    ! local variables
-   logical   :: lmix, cloud_detection 
+   logical   :: lmix 
    integer   :: n,k,isflg,ios,fgat_rad_unit
    integer   :: ngood(nchan),nrej(nchan),nrej_omb_abs(nchan), &
                 nrej_omb_std(nchan),nrej_eccloud(nchan), &
@@ -89,9 +89,8 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
             if (iv%instid(i)%info%proc_domain(1,n)) &
                nrej_clw(k) = nrej_clw(k) + 1
          end if
-
-		 cloud_detection=.false.	
-         if (cloud_detection) then
+	
+         if (cld_detec_ahi) then
             if (iv%instid(i)%landsea_mask(n) == 0 ) then
                if (iv%instid(i)%tb_xb(3,n)-ob%instid(i)%tb(3,n)>3.5) then
                   iv%instid(i)%tb_qc(k,n) = qc_bad
