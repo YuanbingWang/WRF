@@ -91,6 +91,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
          end if
 	
          if (cld_detec_ahi) then
+		    write(*,*) 'Use the built-in cloud detection for ahi'
             if (iv%instid(i)%landsea_mask(n) == 0 ) then
                if (iv%instid(i)%tb_xb(3,n)-ob%instid(i)%tb(3,n)>3.5) then
                   iv%instid(i)%tb_qc(k,n) = qc_bad
@@ -105,6 +106,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
                end if
             end if
          else
+		    write(*,*) 'Read in the cloud mask data from the obs files'
             if (iv%instid(i)%cloudflag(n) < 3) then ! only use abs clear pixel
                 iv%instid(i)%tb_qc(:,n) = qc_bad
                 if (iv%instid(i)%info%proc_domain(1,n)) &
