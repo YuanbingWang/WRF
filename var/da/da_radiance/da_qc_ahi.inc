@@ -152,7 +152,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
 		   !else if(ob%instid(i)%tb(8,n)>292) then
 		      ! clear sky
 		   !else
-		      !iv%instid(i)%tb_qc(4,n) = qc_bad
+		      !iv%instid(i)%tb_qc(3,n) = qc_bad
 		   !end if			
 			
          end do ! nchan
