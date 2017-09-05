@@ -21,8 +21,7 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
    type(iv_type),    intent(inout) :: iv
 
 ! fixed parameter values
-   integer,parameter::time_dims=6       ! Time dimension
-   integer,parameter::nfile_max = 8     ! each netcdf file contains
+   integer,parameter::nfile_max = 7     ! each netcdf file contains
    real,parameter::scale_factor_tb=0.01          ! Maximum allowed NumberOfScans
    real,parameter::add_offset_tb=273.15          ! low  resolution pixel width   
    
@@ -134,9 +133,9 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
       ! here 0x is the input file sequence number
       ! do not confuse it with fgat time slot index
       do i = 1, nfile_max
-         write(filename1,fmt='(A,A,I2.2,A)') trim(infile_tb),'-',i
-		 write(filename2,fmt='(A,A,I2.2,A)') trim(infile_clp),'-',i
-         inquire (file=filename1, exist=fexist)
+         write(filename1,fmt='(A,2I1)') trim(infile_tb),0,i
+		 write(filename2,fmt='(A,2I1)') trim(infile_clp),0,i
+         inquire (file=trim(filename1), exist=fexist)
          if ( fexist ) then
             nfile = nfile + 1
             fname_tb(nfile)  = filename1
@@ -206,7 +205,7 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
           call da_trace_exit("da_read_obs_netcdf4ahi_jaxa")
       endif
    ! sample display
-      write(unit=stdout,fmt=*)'latitude,longitude(pixel=1,scan=1): ',vlatitude(1),vlongitude(1) 	  
+      !write(unit=stdout,fmt=*)'latitude,longitude(pixel=1,scan=1): ',vlatitude(1),vlongitude(1) 	  
 
    ! read array: tb for band 7-16
    ! read	 
@@ -224,8 +223,7 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
 		  end do
 		end do	
 	   ! sample display
-		   write(unit=stdout,fmt=*)&
-			'tbb(pixel=1,scan=1,chan=',k,'): ', tbb(1,1,k)		
+		   !write(unit=stdout,fmt=*)'tbb(pixel=1,scan=1,chan=',k,'): ', tbb(1,1,k)		
       end do		
 	 
    ! read array: satellite zenith angle
@@ -243,8 +241,7 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
 			end do
 		end do	  	  	  
    ! sample display
-      write(unit=stdout,fmt=*)&
-         'satellite zenith angle(pixel=1,scan=1): ',sat_zenith(1,1)
+      !write(unit=stdout,fmt=*)'satellite zenith angle(pixel=1,scan=1): ',sat_zenith(1,1)
  
    ! close infile_tb file 		 
       iret = nf90_close(ncid)
@@ -265,8 +262,7 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
             call da_warning(__FILE__,__LINE__,(/"NETCDF4 read error for: CLTYPE data"/))
           endif
         ! sample display
-          write(unit=stdout,fmt=*)'cloud_type(pixel=1,scan=1): ',cloud_type(1,1)
-		 
+          !write(unit=stdout,fmt=*)'cloud_type(pixel=1,scan=1): ',cloud_type(1,1)		 
 		! close infile_clp file 		 
 		  iret = nf90_close(ncid)		 	 
       end if   
@@ -285,11 +281,9 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
       scan_loop:     do ilatitude=1, nlatitude
 	  
          call da_get_julian_time(idate5(1),idate5(2),idate5(3),idate5(4),idate5(5),obs_time)
-         if ( obs_time < time_slots(0) .or.  &
-            obs_time >= time_slots(num_fgat_time) ) cycle scan_loop
+         if (obs_time<time_slots(0) .or. obs_time>=time_slots(num_fgat_time)) cycle scan_loop
          do ifgat=1,num_fgat_time
-            if ( obs_time >= time_slots(ifgat-1) .and.  &
-               obs_time  < time_slots(ifgat) ) exit
+            if (obs_time >= time_slots(ifgat-1) .and. obs_time < time_slots(ifgat)) exit
          end do
 
       ! start fov_loop
@@ -370,14 +364,16 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
       write(stdout,fmt='(3a,i7)') ' In file: ',trim(fname_tb(ifile)),' got num_ahi_file    : ',num_ahi_file_local
       write(stdout,fmt='(3a,i7)') ' In file: ',trim(fname_tb(ifile)),' got num_ahi_global  : ',num_ahi_global_local
       write(stdout,fmt='(3a,i7)') ' In file: ',trim(fname_tb(ifile)),' got num_ahi_local   : ',num_ahi_local_local
-   end do infile_loop
 
-   deallocate(data_all) ! Deallocate data arrays
-   deallocate(vlatitude)
-   deallocate(vlongitude)
-   deallocate(tbb) 
-   deallocate(sat_zenith)
-   if( got_clp_file ) deallocate(cloud_type)
+      deallocate(vlatitude)
+      deallocate(vlongitude)
+      deallocate(tbb) 
+      deallocate(sat_zenith)
+      if( got_clp_file ) deallocate(cloud_type)
+   
+   end do infile_loop  
+
+   deallocate(data_all) ! Deallocate data arrays  
 
    if (thinning .and. num_ahi_global > 0 ) then
 #ifdef DM_PARALLEL
