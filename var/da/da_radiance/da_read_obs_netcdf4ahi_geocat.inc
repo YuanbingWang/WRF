@@ -405,7 +405,7 @@ subroutine da_read_obs_netcdf4ahi_geocat (iv, infile_tb, infile_clp)
                tb = tbb(ilongitude,ilatitude,k)
                if( tb < tbmin .or. tb > tbmax ) tb = missing_r
                data_all(k)= tb
-            enddo
+            end do
 			
 ! 4.0 assign information to sequential radiance structure
 !--------------------------------------------------------------------------
