@@ -16,7 +16,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
 
    ! local variables
    logical   :: lmix 
-   integer   :: n,k,isflg,ios,fgat_rad_unit
+   integer   :: n,k,isflg,ios,fgat_rad_unit,qc_cloudflag
    integer   :: ngood(nchan),nrej(nchan),nrej_omb_abs(nchan), &
                 nrej_omb_std(nchan),nrej_eccloud(nchan), &
                 nrej_clw(nchan),num_proc_domain, &
@@ -25,6 +25,9 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
    real      :: inv_grosscheck				
 
    character(len=30)  :: filename
+   
+   real      :: cloud_tmp,h_planck,um_wave,c_light,k_boltzm
+   
    real      :: cloud_amount(nchan)
    real      :: c1_cld,c0_clr
    real      :: fe,ft
@@ -90,24 +93,107 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
                nrej_clw(k) = nrej_clw(k) + 1
          end if
 	
-         if (cld_detec_ahi) then
+         if (cld_detec_ahi) then 
 		    write(*,*) 'Use the built-in cloud detection for ahi'
-            if (iv%instid(i)%landsea_mask(n) == 0 ) then
-               if (iv%instid(i)%tb_xb(3,n)-ob%instid(i)%tb(3,n)>3.5) then
-                  iv%instid(i)%tb_qc(k,n) = qc_bad
-                  if (iv%instid(i)%info%proc_domain(1,n)) &
-                     nrej_eccloud(k) = nrej_eccloud(k) + 1
-               end if
-            else
-               if (iv%instid(i)%tb_xb(3,n)-ob%instid(i)%tb(3,n)>2.5) then
-                  iv%instid(i)%tb_qc(k,n) = qc_bad
-                  if (iv%instid(i)%info%proc_domain(1,n)) &
-                     nrej_eccloud(k) = nrej_eccloud(k) + 1
-               end if
-            end if
+			
+		   !!SIMPLE FOURTEEN TEST (Adopted from Zhang et al. 2016)
+			if (ob%instid(i)%tb(8,n) < 285) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+            end if	
+
+			
+		   !! The followings are according to Zhuge and Zou (2016)
+		    h_planck = 6.626176e-34
+			c_light = 2.997925e8
+			k_boltzm = 1.380662e-23
+		   
+		   !!POSITIVE FOURTEEN MINUS FIFTEEN TEST
+			cloud_tmp = ob%instid(i)%tb(8,n) - ob%instid(i)%tb(9,n) - &
+			            (iv%instid(i)%tb_xb_clr(8,n)-iv%instid(i)%tb_xb_clr(9,n)) * &
+						(ob%instid(i)%tb(8,n)-260)/(iv%instid(i)%tb_xb_clr(8,n)-260)			
+			if (isflg == 0 .and. cloud_tmp > 0.8) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+			end if			
+			if (isflg == 2 .and. cloud_tmp > 2.5) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+			end if			
+			if (isflg == 1 .and. cloud_tmp > 1.0) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+			end if
+			if (isflg == 3 .and. cloud_tmp > 1.0) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+			end if	
+
+           !!NEGATIVE FOURTEEN MINUS FIFTEEN TEST
+            cloud_tmp =	iv%instid(i)%tb_xb_clr(8,n) - iv%instid(i)%tb_xb_clr(9,n) - &
+			            (ob%instid(i)%tb(8,n) - ob%instid(i)%tb(9,n))
+			if (isflg == 0 .and. cloud_tmp > 1.0) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+			end if			
+			if (isflg == 2 .and. cloud_tmp > 2.0) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+			end if			
+			if (isflg == 1 .and. cloud_tmp > 5.0) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+			end if
+			if (isflg == 3 .and. cloud_tmp > 5.0) then
+			   iv%instid(i)%tb_qc(k,n) = qc_bad
+			   qc_cloudflag = 1
+			end if	
+			
+		   !!4um EMISSIVITY TEST
+		    !The cloud_tmp0--cloud_tmp43 need to be defined
+		    !um_wave = 3.9e-6 			
+			!cloud_tmp0 = 2 * h_planck * c_light**2 / um_wave**5
+			
+			!cloud_tmp12 = exp(h_planck*c_light/(um_wave*k_boltzm*ob%instid(i)%tb(1,n)))			
+		    !cloud_tmp13 = cloud_tmp0 / (cloud_tmp12 - 1.0)
+			
+			!cloud_tmp22 = exp(h_planck*c_light/(um_wave*k_boltzm*ob%instid(i)%tb(8,n)))			
+		    !cloud_tmp23 = cloud_tmp0 / (cloud_tmp22 - 1.0)
+
+			!cloud_tmp32 = exp(h_planck*c_light/(um_wave*k_boltzm*iv%instid(i)%tb_xb_clr(1,n)))			
+		    !cloud_tmp33 = cloud_tmp0 / (cloud_tmp32 - 1.0)
+
+			!cloud_tmp42 = exp(h_planck*c_light/(um_wave*k_boltzm*iv%instid(i)%tb_xb_clr(8,n)))			
+		    !cloud_tmp43 = cloud_tmp0 / (cloud_tmp42 - 1.0) ! final value of radiance		
+
+            !cloud_tmp = cloud_tmp13/cloud_tmp23 - cloud_tmp33/cloud_tmp43
+			!UNIFORM LOW STRATUS TEST cloud_tmp / (cloud_tmp33/cloud_tmp43)						
+			
+		   !!UNIFORM LOW STRATUS TEST
+			!cloud_tmp = cloud_tmp33/cloud_tmp43 - cloud_tmp13/cloud_tmp23
+			!if (isflg == 0 .and. cloud_tmp > 0.05) then
+			   !iv%instid(i)%tb_qc(k,n) = qc_bad
+			   !qc_cloudflag = 1
+			!end if			
+			!if (isflg == 2 .and. cloud_tmp > 0.1) then
+			   !iv%instid(i)%tb_qc(k,n) = qc_bad
+			   !qc_cloudflag = 1
+			!end if			
+			!if (isflg == 1 .and. cloud_tmp > 0.12) then
+			   !iv%instid(i)%tb_qc(k,n) = qc_bad
+			   !qc_cloudflag = 1
+			!end if
+			!if (isflg == 3 .and. cloud_tmp > 0.12) then
+			   !iv%instid(i)%tb_qc(k,n) = qc_bad
+			   !qc_cloudflag = 1
+			!end if				
+			
+			
+            if (iv%instid(i)%info%proc_domain(1,n) .and. qc_cloudflag==1) &
+                   nrej_eccloud(k) = nrej_eccloud(k) + 1
          else
-		    write(*,*) 'Read in the cloud mask data from the obs files'
-            if (iv%instid(i)%cloudflag(n) < 3) then ! only use abs clear pixel
+		    write(*,*) 'Read in cloud mask data from obs L2 files'
+            if (iv%instid(i)%cloudflag(n) < 3) then ! only use absolutely clear pixel
                 iv%instid(i)%tb_qc(:,n) = qc_bad
                 if (iv%instid(i)%info%proc_domain(1,n)) &
                     nrej_eccloud(k) = nrej_eccloud(k) + 1
@@ -115,6 +201,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
          end if
 		 
          end do
+		 
       end if
 
       ! assigning obs errors
@@ -154,7 +241,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
 		      ! clear sky
 		   !else
 		      !iv%instid(i)%tb_qc(3,n) = qc_bad
-		   !end if			
+		   !end if		
 			
          end do ! nchan
       end if
@@ -163,6 +250,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
       !-----------------------------------------------------------------
       ! assigning obs errors
 	  if ( use_surf_qc ) then
+	     write(*,*) 'Use the quality control according to the surface conditions'
 	  
 		 if ( isflg == 0 .or. isflg == 2 ) then
 			fe=0.01
