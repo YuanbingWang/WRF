@@ -900,6 +900,7 @@
             write(unit=message(1),fmt='(a)')    ''
             write(unit=message(2),fmt='(a,i3)') 'Applying ensemble contribution to FGAT time: ', ifgat_ana
             call da_message(message(1:2))
+			if(.not. use_4denvar .and. num_fgat_time > 1) ifgat_ana = 1 !!for 3DEnFGAT
             call da_transform_vpatox (grid,be,grid%ep,grid%vp,ifgat_ana)
             call da_add_xa(grid%xa, grid%xa_ens) !grid%xa = grid%xa + xa_ens
          end if !ne>0
