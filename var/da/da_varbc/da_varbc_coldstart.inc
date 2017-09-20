@@ -40,81 +40,81 @@
    do inst = 1, iv%num_inst                                            !! loop for sensors
 
       npredmax       = iv%instid(inst)%varbc_info%npredmax
-      num_rad        = iv%instid(inst)%info%n2 - iv%instid(inst)%info%n1 + 1  !iv%instid(inst)%num_rad
-      if (num_rad > 0) then
-         num_rad_domain = COUNT(iv%instid(inst)%info%proc_domain(1,1:num_rad)) !do not count HALO
-      else
-         num_rad_domain = 0
-      end if
-      num_rad_tot    = wrf_dm_sum_integer(num_rad_domain)
-      
       if (npredmax <= 0) cycle                                         !! VarBC instr only
       allocate( ipred(npredmax) )
-    
-    !---------------------------------------------------------------------------
-    ! [1]: Calculate mode of histogram of (uncorrected) innovations 
-    !---------------------------------------------------------------------------
-      do k = 1, iv%instid(inst)%nchan                                  !! loop for channels
-         npred          = iv%instid(inst)%varbc(k)%npred
-	     ipred(1:npred) = iv%instid(inst)%varbc(k)%ipred(1:npred)
-	     if (npred <= 0) cycle                                         !! VarBC channels only
-	     if (ALL(iv%instid(inst)%varbc(k)%pred_use /= 0)) cycle        !! Coldstart channels only
-	 
-	     where (iv%instid(inst)%varbc(k)%pred_use(ipred(1:npred)) == 0) &
-	        iv%instid(inst)%varbc(k)%param(1:npred) = 0.0
-
-         if (iv%instid(inst)%varbc(k)%pred_use(1) == 0) then
-	        Allocate ( hist(nbins),  hist_tot(nbins))
-            hist(:) = 0  
-            mode    = 0.0
-	 
-           ! Accumulate statistics for histogram
-           ! -----------------------------------
-            do n = iv%instid(inst)%info%n1, iv%instid(inst)%info%n2  !!num_rad      !! loop for pixel      
-               if (iv%instid(inst)%info%proc_domain(1,n)) then ! do not count HALO
-                  ibin = NINT( (iv%instid(inst)%tb_inv(k,n)+maxhist)/zbin )
- 	              if ((ibin>0).AND.(ibin<=nbins)) hist(ibin) = hist(ibin) + 1
-               end if          
-            end do             ! end loop for pixels
-	       
-           ! Do inter-processor communication to gather statistics
-           ! ------------------------------------------------------
-	        do ibin = 1, nbins
-	           hist_tot(ibin) = wrf_dm_sum_integer(hist(ibin))
-	        end do
-		   
-           ! Determine mode of Histogram
-           !----------------------------
-            if ( SUM(hist_tot(:)) > 0 ) then
-	           modetmp(1:1) = MAXLOC(hist_tot(:))*zbin - maxhist
-               mode = modetmp(1)
-	        end if
-	 
-	      ! Use mode to initialize VarBC 
-	      !-----------------------------
-	        if (iv%instid(inst)%varbc(k)%ipred(1) == 1) &
-	           iv%instid(inst)%varbc(k)%param(1) = mode
-
-	        Deallocate ( hist, hist_tot )
-            if ( satinfo(inst)%iuse(k) == 1 ) &
-               write(unit=stdout,fmt='(A,A,I5,A,F5.2)') 'VARBC: Cold-starting ', &
-                  trim(adjustl(iv%instid(inst)%rttovid_string)),iv%instid(inst)%ichan(k),&
-	          ' --> ',mode	
-			  
-	     end if
-      end do                                                              !  end loop for channels
-    !---------------------------------------------------------------------------
-    !  [2]: Calculate statistics for cold-started predictors 
-    !---------------------------------------------------------------------------
-      global_cs = .true.
 	  
+      global_cs = .true.	  
       do k = 1, iv%instid(inst)%nchan 
 	     if (iv%instid(inst)%varbc(k)%npred <= 0) cycle                   !! VarBC channels only      
 	     if (ANY(iv%instid(inst)%varbc(k)%pred_use > 0)) global_cs = .false.      
-      end do	
+      end do
+	  	  
+      if (global_cs) then                                                 !! Instrument coldstart only	  
 	  
-      if (global_cs) then                                                 !! Instrument coldstart only
+		num_rad        = iv%instid(inst)%info%n2 - iv%instid(inst)%info%n1 + 1  !iv%instid(inst)%num_rad
+		if (num_rad > 0) then
+			num_rad_domain = COUNT(iv%instid(inst)%info%proc_domain(1,1:num_rad)) !do not count HALO
+		else
+			num_rad_domain = 0
+		end if
+		num_rad_tot    = wrf_dm_sum_integer(num_rad_domain)
+	  
+    !---------------------------------------------------------------------------
+    ! [1]: Calculate mode of histogram of (uncorrected) innovations 
+    !---------------------------------------------------------------------------
+		do k = 1, iv%instid(inst)%nchan                                  !! loop for channels
+			npred          = iv%instid(inst)%varbc(k)%npred
+			ipred(1:npred) = iv%instid(inst)%varbc(k)%ipred(1:npred)
+			if (npred <= 0) cycle                                         !! VarBC channels only
+			if (ALL(iv%instid(inst)%varbc(k)%pred_use /= 0)) cycle        !! Coldstart channels only
+	 
+			where (iv%instid(inst)%varbc(k)%pred_use(ipred(1:npred)) == 0) &
+				iv%instid(inst)%varbc(k)%param(1:npred) = 0.0
 
+			if (iv%instid(inst)%varbc(k)%pred_use(1) == 0) then
+				Allocate ( hist(nbins),  hist_tot(nbins))
+				hist(:) = 0  
+				mode    = 0.0
+	 
+				! Accumulate statistics for histogram
+				! -----------------------------------
+				do n = iv%instid(inst)%info%n1, iv%instid(inst)%info%n2  !!num_rad      !! loop for pixel      
+					if (iv%instid(inst)%info%proc_domain(1,n)) then ! do not count HALO
+						ibin = NINT( (iv%instid(inst)%tb_inv(k,n)+maxhist)/zbin )
+						if ((ibin>0).AND.(ibin<=nbins)) hist(ibin) = hist(ibin) + 1
+					end if          
+				end do             ! end loop for pixels
+	       
+				! Do inter-processor communication to gather statistics
+				! ------------------------------------------------------
+				do ibin = 1, nbins
+					hist_tot(ibin) = wrf_dm_sum_integer(hist(ibin))
+				end do
+		   
+				! Determine mode of Histogram
+				!----------------------------
+				if ( SUM(hist_tot(:)) > 0 ) then
+					modetmp(1:1) = MAXLOC(hist_tot(:))*zbin - maxhist
+					mode = modetmp(1)
+				end if
+	 
+				! Use mode to initialize VarBC 
+				!-----------------------------
+				if (iv%instid(inst)%varbc(k)%ipred(1) == 1) &
+					iv%instid(inst)%varbc(k)%param(1) = mode
+
+				Deallocate ( hist, hist_tot )
+				if ( satinfo(inst)%iuse(k) == 1 ) &
+					write(unit=stdout,fmt='(A,A,I5,A,F5.2)') 'VARBC: Cold-starting ', &
+					trim(adjustl(iv%instid(inst)%rttovid_string)),iv%instid(inst)%ichan(k),&
+					' --> ',mode				  
+			end if
+		 end do                                                              !  end loop for channels
+	  
+    !---------------------------------------------------------------------------
+    !  [2]: Calculate statistics for cold-started predictors 
+    !---------------------------------------------------------------------------
+	
          allocate (mean(npredmax), rms(npredmax), mean_tot(npredmax), rms_tot(npredmax))
 
         ! Accumulate statistics for predictor mean/std
@@ -152,7 +152,8 @@
          deallocate(mean, rms, mean_tot, rms_tot)
 
       end if
-      deallocate(ipred)  	           	     	
+      deallocate(ipred)  
+	  
     !---------------------------------------------------------------------------
     !  [3]: Normalize predictors
     !---------------------------------------------------------------------------
