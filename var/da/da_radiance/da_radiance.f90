@@ -4,6 +4,8 @@ module da_radiance
    ! Purpose: module for radiance data assimilation. 
    !---------------------------------------------------------------------------
 
+   use netcdf
+   
 #if defined(HDF5)
    use hdf5
 #endif

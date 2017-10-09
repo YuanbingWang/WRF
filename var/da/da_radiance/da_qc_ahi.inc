@@ -94,7 +94,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
          end if
 	
          if (cld_detec_ahi) then 
-		    write(*,*) 'Use the built-in cloud detection for ahi'
+		    !write(*,*) 'Use the built-in cloud detection for ahi'
 			
 		   !!SIMPLE FOURTEEN TEST (Adopted from Zhang et al. 2016)
 			if (ob%instid(i)%tb(8,n) < 285) then
@@ -192,7 +192,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
             if (iv%instid(i)%info%proc_domain(1,n) .and. qc_cloudflag==1) &
                    nrej_eccloud(k) = nrej_eccloud(k) + 1
          else
-		    write(*,*) 'Read in cloud mask data from obs L2 files'
+		    !write(*,*) 'Read in cloud mask data from obs L2 files'
             if (iv%instid(i)%cloudflag(n) < 3) then ! only use absolutely clear pixel
                 iv%instid(i)%tb_qc(:,n) = qc_bad
                 if (iv%instid(i)%info%proc_domain(1,n)) &

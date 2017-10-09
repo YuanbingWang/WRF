@@ -11,8 +11,7 @@ subroutine da_read_obs_netcdf4ahi_geocat (iv, infile_tb, infile_clp)
    !
    !  HISTORY: 2016/10/22 - Creation         Yuanbing Wang, NUIST/CAS, NCAR/NESL/MMM/DAS
    !------------------------------------------------------------------------------
-
-   use netcdf   
+   
    implicit none
 
    character(len=*), intent(in)    :: infile_tb, infile_clp

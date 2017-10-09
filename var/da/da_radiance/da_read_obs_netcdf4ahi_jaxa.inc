@@ -13,8 +13,6 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
    !  To be devoloped: 1.time information; 2.dimension sequence
    !------------------------------------------------------------------------------
    
-   use netcdf
-   
    implicit none
 
    character(len=*), intent(in)    :: infile_tb, infile_clp
