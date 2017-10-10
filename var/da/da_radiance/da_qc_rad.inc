@@ -98,6 +98,8 @@ subroutine da_qc_rad (it, ob, iv)
          call da_qc_amsr2(it,i,nchan,ob,iv)
       else if (ahi) then
          call da_qc_ahi(it,i,nchan,ob,iv)
+      else if (mwhs2) then
+         call da_qc_mwhts(it,i,nchan,ob,iv)		 
       else
          write(unit=message(1),fmt='(A,A)') &
             "Unrecognized instrument",trim(rttov_inst_name(rtminit_sensor(i)))

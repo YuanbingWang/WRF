@@ -232,7 +232,13 @@ subroutine da_setup_radiance_structures( grid, ob, iv )
 			!filename = 'ahi'
 			!call da_read_obs_bufrahi ('ahi   ',iv, filename)
 		 !end if			 
-      end if	  
+      end if
+
+      if (use_mwhs2obs) then
+         write(unit=stdout,fmt='(a)') 'Reading radiance 1b data from obs.mwhs2'
+         call da_read_obs_fy3(iv, 'obs.mwhs2')
+      end if
+	  
    end if
 
    if ( use_filtered_rad ) then

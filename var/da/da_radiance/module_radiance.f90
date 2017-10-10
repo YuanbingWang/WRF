@@ -82,7 +82,7 @@ module module_radiance
 
   ! cf. RTTOV-11 Users Guide Table 3
   ! List of instruments  !!!! HIRS is number 0
-  Character (len=8), Dimension(0:65) :: rttov_inst_name  =             &
+  Character (len=8), Dimension(0:99) :: rttov_inst_name  =             &
      & (/ 'hirs    ', 'msu     ', 'ssu     ', 'amsua   ', 'amsub   ',  &
         & 'avhrr   ', 'ssmi    ', 'vtpr1   ', 'spare   ', 'tmi     ',  &
         & 'ssmis   ', 'airs    ', 'hsb     ', 'modis   ', 'atsr    ',  &
@@ -96,7 +96,13 @@ module module_radiance
         & 'reserved', 'reserved', 'reserved', 'reserved', 'scams   ',  &
         & 'smmr    ', 'ahi     ', 'irs     ', 'altika  ', 'iasing  ',  &
         & 'tm      ', 'fci     ', 'amsr1   ', 'amsr2   ', 'vissr   ',  &
-        & 'slstr   '/)
+        & 'slstr   ', 'reserved', 'reserved', 'reserved', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'mwhs-2  ', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'giirs   ', 'agri    '/)
 
   ! cf. rttov_platform_name above and CRTM: v2.1.3 User Guide Table B.1
   ! n=noaa; f=dmsp; g=goes; eos-2/1=aqua/terra;
@@ -119,7 +125,7 @@ module module_radiance
   ! For instrument names that can not be directly mapped here to names
   ! used in crtm coeff names, they will be re-set in
   ! da_crtm_sensor_descriptor.inc
-  Character (len=8), Dimension(0:65) :: crtm_sensor_name  =            &
+  Character (len=8), Dimension(0:99) :: crtm_sensor_name  =            &
      & (/ 'hirs    ', 'msu     ', 'ssu     ', 'amsua   ', 'amsub   ',  &
         & 'avhrr   ', 'ssmi    ', 'xxxxxxxx', 'spare   ', 'tmi     ',  &
         & 'ssmis   ', 'airs    ', 'hsb     ', 'modis   ', 'atsr    ',  &
@@ -133,7 +139,13 @@ module module_radiance
         & 'reserved', 'reserved', 'reserved', 'reserved', 'xxxxxxxx',  &
         & 'xxxxxxxx', 'ahi     ', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
         & 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'amsr2   ', 'vissr   ',  &
-        & 'xxxxxxxx'/)
+        & 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+		& 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'mwhs-2  ', 'xxxxxxxx',  &
+		& 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+		& 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+		& 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+		& 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+		& 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'giirs   ', 'agri    '/)
 
 #ifdef RTTOV
    type (rttov_coefs), allocatable   :: coefs(:)     ! coefficients structure

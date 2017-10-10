@@ -143,7 +143,10 @@ subroutine da_radiance_init(iv,ob)
 	  read(1990,*) 
       read(1990,*) nscan(n) 
       close(1990)     
-	  write(*,*) 'AHI scanline number', nscan(n)        
+	  write(*,*) 'AHI scanline number', nscan(n)
+   else if ( trim( crtm_sensor_name(rtminit_sensor(n))) == 'mwhs-2' ) then
+      nchanl(n)  = 15
+      nscan(n)   = 2385	  
    else
       call da_error(__FILE__,__LINE__, &
         (/"Unrecognized instrument"/))
