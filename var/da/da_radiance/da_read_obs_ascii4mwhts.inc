@@ -165,11 +165,11 @@ subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
 	  allocate(idate(6,iscan))
 	  do j=1,nscan
 		do i=1,nfov
-           read(2017,*) idate5(1,j),idate5(2,j),idate5(3,j),idate5(4,j),idate5(5,j),idate5(6,j),&
+           read(2017,*) sun_azimuth(i,j),sun_zenith(i,j),sat_azimuth(i,j),sat_zenith(i,j),&
+						idate5(1,j),idate5(2,j),idate5(3,j),idate5(4,j),idate5(5,j),idate5(6,j),&
 						sfcflag,vlatitude(i,j),vlongitude(i,j),tbb(i,j,1),tbb(i,j,2),tbb(i,j,3),&
 						tbb(i,j,4),tbb(i,j,5),tbb(i,j,6),tbb(i,j,7),tbb(i,j,8),tbb(i,j,9),tbb(i,j,10),&
-						tbb(i,j,11),tbb(i,j,12),tbb(i,j,13),tbb(i,j,14),tbb(i,j,15),sat_zenith(i,j),&
-						sat_azimuth(i,j),sun_zenith(i,j),sun_azimuth(i,j)
+						tbb(i,j,11),tbb(i,j,12),tbb(i,j,13),tbb(i,j,14),tbb(i,j,15)
 		end do
 	  end do	
  
