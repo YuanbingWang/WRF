@@ -77,7 +77,7 @@ module module_radiance
         & 'envisat ', 'msg     ', 'fy1     ', 'adeos   ', 'mtsat   ',  &
         & 'coriolis', 'jpss    ', 'gifts   ', 'tiros   ', 'meghatr ',  &
         & 'kalpana ', 'reserved', 'fy3     ', 'coms    ', 'meteor-m',  &
-        & 'gosat   ', 'calipso ', 'reserved', 'gcom-w  ', 'nimbus  ',  &
+        & 'gosat   ', 'calipso ', 'fy4     ', 'gcom-w  ', 'nimbus  ',  &
         & 'himawari', 'mtg     ', 'saral   ', 'metop-ng', 'landsat '/)
 
   ! cf. RTTOV-11 Users Guide Table 3
@@ -116,7 +116,7 @@ module module_radiance
         & 'envisat ', 'msg     ', 'xxxxxxxx', 'xxxxxxxx', 'mt      ',  &
         & 'coriolis', 'npp     ', 'gifts   ', 'tiros   ', 'meghat  ',  &
         & 'kalpana ', 'tiros   ', 'fy3     ', 'coms    ', 'xxxxxxxx',  &
-        & 'xxxxxxxx', 'xxxxxxxx', 'reserved', 'gcom-w  ', 'xxxxxxxx',  &
+        & 'xxxxxxxx', 'xxxxxxxx', 'fy4     ', 'gcom-w  ', 'xxxxxxxx',  &
         & 'himawari', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx'/)
 
   ! cf. rttov_inst_name above and CRTM: v2.1.3 User Guide Table B.1

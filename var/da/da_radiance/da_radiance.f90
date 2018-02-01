@@ -47,7 +47,7 @@ module da_radiance
       rtminit_print, rttov_scatt,comm,root,ierr,biasprep, qc_rad, num_procs, &
       tovs_min_transfer,use_error_factor_rad,num_fgat_time,stdout,trace_use, &
       qc_good, qc_bad,myproc,biascorr,thinning,thinning_mesh, cld_detec_ahi, &
-      rad_monitoring, monitor_on, kts, kte, kms, kme, calc_weightfunc, &
+      rad_monitoring, monitor_on, kts, kte, kms, kme, calc_weightfunc, use_giirsobs, &
       use_mwtsobs, use_mwhsobs, use_mwhs2obs, use_atmsobs, use_amsr2obs, use_ahiobs, &
       use_hirs4obs, use_mhsobs,bufr_year, bufr_month,bufr_day,bufr_hour, &
       bufr_minute, bufr_second,bufr_solzen, bufr_station_height, &
@@ -124,6 +124,7 @@ contains
 #include "da_read_obs_hdf5ahi.inc"
 #include "da_read_obs_netcdf4ahi_geocat.inc"
 #include "da_read_obs_netcdf4ahi_jaxa.inc"
+#include "da_read_obs_netcdf4giirs.inc"
 #include "da_read_obs_ascii4mwhts.inc"
 #include "da_allocate_rad_iv.inc"
 #include "da_initialize_rad_iv.inc"

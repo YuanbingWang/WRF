@@ -55,6 +55,9 @@ subroutine da_setup_obs_structures( grid, ob, iv, j_cost)
       use_hirs4obs         = .false.
       use_mhsobs           = .false.
       use_msuobs           = .false.
+	  use_ahiobs           = .false.
+	  use_giirsobs         = .false.
+	  use_mwhs2obs         = .false.	  
       use_amsuaobs         = .false.
       use_amsubobs         = .false.
       use_mwtsobs          = .false.
@@ -88,7 +91,7 @@ subroutine da_setup_obs_structures( grid, ob, iv, j_cost)
 
    if (use_hirs2obs .OR. use_hirs3obs .OR. use_msuobs .OR. use_amsuaobs .OR. &
       use_amsubobs .OR. use_airsobs .OR. use_eos_amsuaobs .OR. &
-      use_hsbobs .OR. use_kma1dvar .OR. use_filtered_rad .OR. &
+      use_hsbobs .OR. use_kma1dvar .OR. use_filtered_rad .OR. use_giirsobs .OR. & 
       use_ssmisobs .OR. use_hirs4obs .OR. use_mhsobs .OR. use_pseudo_rad .OR. &
       use_mwtsobs  .OR. use_mwhsobs .OR. use_atmsobs .OR. use_simulated_rad .OR. &
       use_iasiobs .OR. use_seviriobs .OR. use_amsr2obs .OR. use_ahiobs .OR. use_mwhs2obs) then
@@ -142,6 +145,9 @@ subroutine da_setup_obs_structures( grid, ob, iv, j_cost)
       use_airsobs          = .false.
       use_eos_amsuaobs     = .false.
       use_hsbobs           = .false.
+	  use_ahiobs           = .false.
+	  use_giirsobs         = .false.
+	  use_mwhs2obs         = .false.
       use_obsgts           = .false.
       use_rad              = .false.
       use_airsretobs       = .false.

@@ -64,6 +64,8 @@ subroutine da_qc_rad (it, ob, iv)
       seviri = trim(rttov_inst_name(rtminit_sensor(i))) == 'seviri'
       amsr2 = trim(rttov_inst_name(rtminit_sensor(i))) == 'amsr2'
 	  ahi = trim(rttov_inst_name(rtminit_sensor(i))) == 'ahi'
+	  giirs = trim(rttov_inst_name(rtminit_sensor(i))) == 'giirs'
+	  mwhs2 = trim(rttov_inst_name(rtminit_sensor(i))) == 'mwhs-2'
 	  
       if (hirs) then
          ! 1.0 QC for HIRS
