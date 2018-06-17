@@ -228,7 +228,6 @@ subroutine da_get_innov_vector_crtm ( it, grid, ob, iv )
       calc_tb_clr = .false.
       if ( crtm_cloud .or. cld_detec_ahi ) then
          !Tb_clear_sky is only needed for symmetric obs error model
-         !symmetric obs error model only implemented for amsr2 for now
          calc_tb_clr = .true.
       end if
 

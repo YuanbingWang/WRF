@@ -50,7 +50,7 @@ module da_radiance
       rad_monitoring, monitor_on, kts, kte, kms, kme, calc_weightfunc, use_giirsobs, &
       use_mwtsobs, use_mwhsobs, use_mwhs2obs, use_atmsobs, use_amsr2obs, use_ahiobs, &
       use_hirs4obs, use_mhsobs,bufr_year, bufr_month,bufr_day,bufr_hour, &
-      bufr_minute, bufr_second,bufr_solzen, bufr_station_height, &
+      bufr_minute, bufr_second,bufr_solzen, bufr_station_height, use_agriobs, &
       bufr_landsea_mask,bufr_solazi,tovs_end, max_tovs_input, bufr_satzen, nchan_mhs, &
       nchan_msu, nchan_amsua,nchan_hirs2, nchan_hirs3, nchan_hirs4, nchan_airs, &
       bufr_lon, bufr_satellite_id, bufr_ifov,nchan_amsub, tovs_start, bufr_lat, &
@@ -121,6 +121,7 @@ contains
 #include "da_read_obs_bufriasi.inc"
 #include "da_read_obs_bufrseviri.inc"
 #include "da_read_obs_hdf5amsr2.inc"
+#include "da_read_obs_hdf5agri.inc"
 #include "da_read_obs_hdf5ahi.inc"
 #include "da_read_obs_netcdf4ahi_geocat.inc"
 #include "da_read_obs_netcdf4ahi_jaxa.inc"

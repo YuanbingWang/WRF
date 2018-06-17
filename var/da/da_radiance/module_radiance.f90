@@ -71,14 +71,19 @@ module module_radiance
   ! cf. RTTOV-11 Users Guide Table 2
   ! index 19 is sentinel3 in Table 2, here we keep it as tiros for 
   ! WRFDA backward compatibility
-  Character (len=8), Parameter :: rttov_platform_name(1:35) =          &
+  Character (len=8), Parameter :: rttov_platform_name(1:60) =          &
      & (/ 'noaa    ', 'dmsp    ', 'meteosat', 'goes    ', 'gms     ',  &
         & 'fy2     ', 'trmm    ', 'ers     ', 'eos     ', 'metop   ',  &
         & 'envisat ', 'msg     ', 'fy1     ', 'adeos   ', 'mtsat   ',  &
         & 'coriolis', 'jpss    ', 'gifts   ', 'tiros   ', 'meghatr ',  &
         & 'kalpana ', 'reserved', 'fy3     ', 'coms    ', 'meteor-m',  &
-        & 'gosat   ', 'calipso ', 'fy4     ', 'gcom-w  ', 'nimbus  ',  &
-        & 'himawari', 'mtg     ', 'saral   ', 'metop-ng', 'landsat '/)
+        & 'gosat   ', 'calipso ', 'reserved', 'gcom-w  ', 'nimbus  ',  &
+        & 'himawari', 'mtg     ', 'saral   ', 'metop-ng', 'landsat ',  &
+		& 'reserved', 'reserved', 'reserved', 'mwhs-2  ', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
+		& 'reserved', 'fy4     ', 'reserved', 'reserved', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved'/)
 
   ! cf. RTTOV-11 Users Guide Table 3
   ! List of instruments  !!!! HIRS is number 0
@@ -110,14 +115,19 @@ module module_radiance
   ! For satellite names that can not be directly mapped here to names
   ! used in crtm coeff names, they will be re-set in
   ! da_crtm_sensor_descriptor.inc
-  Character (len=8), Parameter :: crtm_platform_name(1:35) =           &
+  Character (len=8), Parameter :: crtm_platform_name(1:60) =           &
      & (/ 'n       ', 'f       ', 'm       ', 'g       ', 'gms     ',  &
         & 'xxxxxxxx', 'trmm    ', 'ers     ', 'eos     ', 'metop   ',  &
         & 'envisat ', 'msg     ', 'xxxxxxxx', 'xxxxxxxx', 'mt      ',  &
         & 'coriolis', 'npp     ', 'gifts   ', 'tiros   ', 'meghat  ',  &
         & 'kalpana ', 'tiros   ', 'fy3     ', 'coms    ', 'xxxxxxxx',  &
-        & 'xxxxxxxx', 'xxxxxxxx', 'fy4     ', 'gcom-w  ', 'xxxxxxxx',  &
-        & 'himawari', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx'/)
+        & 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'gcom-w  ', 'xxxxxxxx',  &
+        & 'himawari', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+        & 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+        & 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+        & 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+        & 'xxxxxxxx', 'fy4     ', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx',  &
+        & 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx', 'xxxxxxxx'/)
 
   ! cf. rttov_inst_name above and CRTM: v2.1.3 User Guide Table B.1
   ! List of instruments  !!!! HIRS is number 0

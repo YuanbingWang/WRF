@@ -58,6 +58,9 @@ subroutine da_read_pseudo_rad (iv)
    else if (sensor_id == 21)  then
    !seviri
       nchan = 8 
+   else if (sensor_id == 99)  then
+      !agri
+      nchan = 8	  
    else if (sensor_id == 63)  then
       !amsr2
       nchan = 14

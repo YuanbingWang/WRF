@@ -238,6 +238,7 @@ contains
 #include "da_qc_atms.inc"
 #include "da_qc_seviri.inc"
 #include "da_qc_amsr2.inc"
+#include "da_qc_agri.inc"
 #include "da_qc_ahi.inc"
 #include "da_qc_giirs.inc"
 #include "da_write_iv_rad_ascii.inc"

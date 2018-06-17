@@ -130,6 +130,9 @@ subroutine da_radiance_init(iv,ob)
    else if ( trim( crtm_sensor_name(rtminit_sensor(n))) == 'amsr2' ) then
       nchanl(n)  = 14
       nscan(n)   = 486
+   else if ( trim( crtm_sensor_name(rtminit_sensor(n))) == 'agri' ) then
+      nchanl(n)  = 8
+      nscan(n)   = 2748
    else if ( trim( crtm_sensor_name(rtminit_sensor(n))) == 'ahi' ) then
 	  nchanl(n)  = 10	  
      !open the ahi info file 

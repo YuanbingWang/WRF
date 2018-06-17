@@ -201,6 +201,15 @@ subroutine da_setup_radiance_structures( grid, ob, iv )
          call da_error(__FILE__,__LINE__,message(1:1))
 #endif
       end if
+      if (use_agriobs) then
+#if defined(HDF5)
+         write(unit=stdout,fmt='(a)') 'Reading AGRI data in HDF5 format'
+         call da_read_obs_hdf5agri (iv, 'L1AGRITBR', 'L2AGRICLP')
+#else
+         message(1)='To read AGRI data, WRFDA must be compiled with HDF5'
+         call da_error(__FILE__,__LINE__,message(1:1))
+#endif
+      end if	  
       if (use_ahiobs) then	  
         !open the ahi info file 
          open(unit=1990,file='ahi_info',status='old',iostat=iret)

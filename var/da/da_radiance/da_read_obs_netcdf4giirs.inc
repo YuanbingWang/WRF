@@ -75,7 +75,7 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
 !  0.0  Initialize variables
 !-----------------------------------
    head_allocated = .false.
-   platform_id  = 28  ! Table-2 Col 1 corresponding to 'fy4'
+   platform_id  = 52  ! Table-2 Col 1 corresponding to 'fy4'
    satellite_id = 1   ! Table-2 Col 3
    sensor_id    = 98  ! Table-3 Col 2 corresponding to 'giirs'
 

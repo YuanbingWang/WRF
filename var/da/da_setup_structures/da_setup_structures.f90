@@ -62,7 +62,7 @@ module da_setup_structures
       ids,ide,jds,jde,kds,kde, ims,ime,jms,jme,kms,kme, &
       its,ite,jts,jte,kts,kte, ips,ipe,jps,jpe,kps,kpe, root, comm, ierr, &
       fmt_info, fmt_srfc, fmt_each, unit_end, max_ext_its, &  
-      psi_chi_factor, psi_t_factor, psi_ps_factor, psi_rh_factor, &
+      psi_chi_factor, psi_t_factor, psi_ps_factor, psi_rh_factor, use_agriobs, &
       chi_u_t_factor, chi_u_ps_factor,chi_u_rh_factor, t_u_rh_factor, ps_u_rh_factor, &
       interpolate_stats, be_eta, thin_rainobs, fgat_rain_flags, use_iasiobs, use_ahiobs, &
       use_seviriobs, jds_int, jde_int, anal_type_hybrid_dual_res, use_amsr2obs, nrange, use_4denvar
