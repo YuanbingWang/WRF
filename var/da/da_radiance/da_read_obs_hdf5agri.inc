@@ -43,9 +43,13 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
    real(4) :: tb13(nlongitude,nlatitude)  ! tb for band 13
    real(4) :: tb14(nlongitude,nlatitude)  ! tb for band 14
 
-   real(4) :: sat_zenith(nlongitude,nlatitude)  ! satellite_zenith_angle   
+   real(4) :: sat_zenith(nlongitude,nlatitude)  ! satellite_zenith_angle
+   integer(4)::ColumnNumber(nlongitude,nlatitude),LineNumber(nlongitude,nlatitude)
    integer(4) :: cloud_mask(nlongitude,nlatitude)     !obs cloud mask
    
+   real(4) :: latlonx,latlony,latlonsd1,latlonsd2,latlonsd3,latlonsd
+   real(4) :: latlonsn,latlons1,latlons2,latlons3,latlonsxy
+			  
    real(r_kind),parameter  :: tbmin  = 50._r_kind
    real(r_kind),parameter  :: tbmax  = 550._r_kind
    real(r_kind),parameter  :: tb_scale  = 100._r_kind
@@ -273,19 +277,44 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
 
    ! close infile_tb and HDF5
       call H5Fclose_f(fhnd1,iret)	  
-		 
-   ! read array: satellite_zenith_angle
-   ! read
+
+	  
+   ! open infile for reading geo data
       call H5Fopen_f('L1AGRIGEO',H5F_ACC_RDONLY_F,fhnd1,iret,H5P_DEFAULT_F)
+	  
+   ! read array: satellite_zenith_angle
       call H5Dopen_f(fhnd1,'NOMSatelliteZenith',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_IEEE_F32LE,sat_zenith,sz1,iret,H5S_ALL_F,H5S_ALL_F)
+      call H5Dread_f(dhnd1,H5T_IEEE_F32BE,sat_zenith,sz1,iret,H5S_ALL_F,H5S_ALL_F)
       if(iret.lt.0)then
          call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: satellite_zenith_angle"/))
       endif
       call H5Dclose_f(dhnd1,iret)
-	  call H5Fclose_f(fhnd1,iret)
    ! sample display
       write(unit=stdout,fmt=*)'sat_zenith(pixel=1,scan=1): ',sat_zenith(1,1)
+	  
+   ! read array: LineNumber
+      call H5Dopen_f(fhnd1,'LineNumber',dhnd1,iret)
+      call H5Dread_f(dhnd1,H5T_NATIVE_SHORT,LineNumber,sz1,iret,H5S_ALL_F,H5S_ALL_F)
+      if(iret.lt.0)then
+         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: LineNumber"/))
+      endif
+      call H5Dclose_f(dhnd1,iret)
+   ! sample display
+      write(unit=stdout,fmt=*)'LineNumber(pixel=1,scan=1): ',LineNumber(1,1)	 
+
+   ! read array: ColumnNumber
+      call H5Dopen_f(fhnd1,'ColumnNumber',dhnd1,iret)
+      call H5Dread_f(dhnd1,H5T_NATIVE_SHORT,ColumnNumber,sz1,iret,H5S_ALL_F,H5S_ALL_F)
+      if(iret.lt.0)then
+         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: ColumnNumber"/))
+      endif
+      call H5Dclose_f(dhnd1,iret)
+   ! sample display
+      write(unit=stdout,fmt=*)'ColumnNumber(pixel=1,scan=1): ',ColumnNumber(1,1)	  
+
+   ! close infile_geo and HDF5	  
+	  call H5Fclose_f(fhnd1,iret)
+
 	  
      !open infile_clp file 
       got_clp_file = .false.
@@ -295,7 +324,7 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
       end if
 	  
       if ( got_clp_file ) then
-		! read array: satellite zenith angle 
+		! read array: cloud mask 
           rcode = nf90_inq_varid(ncid, 'CLM', clmid)
 		  iret = nf90_get_var(ncid, clmid, cloud_mask)
           if(iret /= 0)then
@@ -307,7 +336,7 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
 		  iret = nf90_close(ncid)		 	 
       end if 
 	  
-   ! read lat
+   ! read binary latlon
       open(520,file='L1AGRILATLON',access='direct',form='unformatted', &
 	           recl=8,convert='little_endian',iostat=iret) 
       if(iret.lt.0)then
@@ -356,6 +385,22 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
 			
             num_agri_file       = num_agri_file + 1
             num_agri_file_local = num_agri_file_local + 1
+			
+			!caculation the latitude and longitude
+			latlonx=(ColumnNumber(ilongitude,ilatitude)-1373.5)*(65536*3.1415926)/(180*10233137)
+			latlony=(LineNumber(ilongitude,ilatitude)-1373.5)*(65536*3.1415926)/(180*10233137)
+			latlonsd1=cos(latlony)**2+sin(latlony)**2*1.0067395
+			latlonsd2=42164*cos(latlonx)*cos(latlony)
+			latlonsd3=latlonsd2**2-(42164**2-6378.137**2)*(latlonsd1)
+			latlonsd=sqrt(latlonsd3)
+			latlonsn=(42164*cos(latlonx)*cos(latlony)-latlonsd)/(latlonsd00)
+			latlons1=42164-latlonsn*cos(latlonx)*cos(latlony)
+			latlons2=latlonsn*sin(latlonx)*cos(latlony)
+			latlons3=-latlonsn*sin(latlony)
+			latlonsxy=sqrt(latlons1**2+latlons2**2)
+			vlatitude(ilongitude,ilatitude)=57.2957805*atand(latlons3/latlonsxy*1.0067395)
+			vlongitude(ilongitude,ilatitude)=57.2957805*atand(latlons2/latlons1)+104.7
+			
             info%lat  =  vlatitude(ilongitude,ilatitude)
             info%lon  =  vlongitude(ilongitude,ilatitude)
 
