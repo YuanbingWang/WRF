@@ -14,7 +14,7 @@ subroutine da_qc_rad (it, ob, iv)
 
    integer :: i, nchan,p,j
    logical   :: amsua, amsub, hirs, msu,airs, hsb, ssmis, mhs, iasi, seviri
-   logical   :: mwts, mwhs, atms, amsr2, ahi, agri, giirs
+   logical   :: mwts, mwhs, atms, amsr2, ahi, agri, giirs, mwhs2
 
    integer, allocatable :: index(:)
    integer :: num_tovs_avg
@@ -103,6 +103,8 @@ subroutine da_qc_rad (it, ob, iv)
          call da_qc_agri(it,i,nchan,ob,iv)		 
       else if (ahi) then
          call da_qc_ahi(it,i,nchan,ob,iv)
+      else if (giirs) then
+         call da_qc_giirs(it,i,nchan,ob,iv)		 
       else if (mwhs2) then
          call da_qc_mwhts(it,i,nchan,ob,iv)		 
       else

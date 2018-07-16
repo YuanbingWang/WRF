@@ -40,7 +40,7 @@ subroutine da_read_y_unit(filename,unit_out,num,obs_type_in, nc)
         (index(iv_type,'dmsp') > 0) .or. (index(iv_type,'metop') > 0) .or. &
         (index(iv_type,'tiros') > 0) .or. (index(iv_type,'msg') > 0) .or. &
         (index(iv_type,'jpss') > 0)  .or. (index(iv_type,'gcom-w') >0) .or. &
-		(index(iv_type,'himawari') >0) .or. (index(iv_type,'fy3') >0)) .or. &
+		(index(iv_type,'himawari') >0) .or. (index(iv_type,'fy3') >0) .or. &
 		(index(iv_type,'fy4') >0)) then
 		
       do n = 1, num_obs

@@ -98,14 +98,14 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
    end do
    if (inst == 0) then
       call da_warning(__FILE__,__LINE__, &
-          (/"The combination of Satellite_Id and Sensor_Id for AHI is not found"/))
+          (/"The combination of Satellite_Id and Sensor_Id for GIIRS is not found"/))
       if (trace_use) call da_trace_exit("da_read_obs_netcdf4giirs")
       return
    end if
 
    nchan = iv%instid(inst)%nchan
    nchan=961
-   write(unit=stdout,fmt=*)'AHI nchan: ',nchan
+   write(unit=stdout,fmt=*)'GIIRS nchan: ',nchan
    allocate(data_all(1:nchan))
 
 ! 1.0 Assign file names and prepare to read ahi files
@@ -137,7 +137,7 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
 
    if ( nfile == 0 ) then
       call da_warning(__FILE__,__LINE__, &
-         (/"No valid AHI file found."/))
+         (/"No valid GIIRS file found."/))
       if (trace_use) call da_trace_exit("da_read_obs_netcdf4giirs")
       return
    end if 
@@ -203,15 +203,13 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
 
    ! read array: tb for band 7-16
    ! read	 
-      allocate( tbb(nsatobs,nchan)) 
-      do k=1,nchan	  
-		iret = nf90_inq_varid(ncid, 'ES_RealLW_TBB', tbb_id)	  
-		iret = nf90_get_var(ncid, tbb_id, tbb(:,k))
+      allocate( tbb(nsatobs,nchan)) 	  
+	  iret = nf90_inq_varid(ncid, 'ES_RealLW_TBB', tbb_id)	  
+	  iret = nf90_get_var(ncid, tbb_id, tbb)
 		if(iret /= 0)then
 		  call da_warning(__FILE__,__LINE__, &
 			   (/"NETCDF4 read error for: Brightness Temperature"/))
 		endif	  		
-      end do
    ! sample display
 	  !write(unit=stdout,fmt=*)'tbb(pixel=1,scan=1,chan=',k,'): ', tbb(1,1,1)	  
 	 
@@ -252,7 +250,7 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
             if (obs_time >= time_slots(ifgat-1) .and. obs_time < time_slots(ifgat)) exit
          end do
 			
-			if ( sat_zenith(isatobs) > 65.0 ) cycle fov_loop
+			if ( sat_zenith(isatobs) > 60.0 ) cycle scan_loop
 			
             num_giirs_file       = num_giirs_file + 1
             num_giirs_file_local = num_giirs_file_local + 1
@@ -260,12 +258,12 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
             info%lon  =  vlongitude(isatobs)
 
             call da_llxy (info, loc, outside, outside_all)
-            if (outside_all) cycle fov_loop
+            if (outside_all) cycle scan_loop
 
             num_giirs_global       = num_giirs_global + 1
             num_giirs_global_local = num_giirs_global_local + 1
             ptotal(ifgat) = ptotal(ifgat) + 1
-            if (outside) cycle fov_loop   ! No good for this PE
+            if (outside) cycle scan_loop   ! No good for this PE
 
             num_giirs_local       = num_giirs_local + 1
             num_giirs_local_local = num_giirs_local_local + 1
@@ -289,7 +287,7 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
                call map2grids(inst,ifgat,dlat_earth,dlon_earth,crit,iobs,itx,1,itt,iout,iuse)
                if (.not. iuse) then
                   num_giirs_thinned = num_giirs_thinned+1
-                  cycle fov_loop
+                  cycle scan_loop
                end if
             end if
 
@@ -438,7 +436,7 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
       call da_warning(__FILE__,__LINE__,message(1:1))
    endif
 
-   write(unit=stdout,fmt='(a)') 'AHI data counts: '
+   write(unit=stdout,fmt='(a)') 'GIIRS data counts: '
    write(stdout,fmt='(a,i7)') ' In file: ',num_giirs_file
    write(stdout,fmt='(a,i7)') ' Global : ',num_giirs_global
    write(stdout,fmt='(a,i7)') ' Local  : ',num_giirs_local

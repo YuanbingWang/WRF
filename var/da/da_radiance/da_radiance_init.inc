@@ -151,7 +151,7 @@ subroutine da_radiance_init(iv,ob)
       nchanl(n)  = 15
       nscan(n)   = 2385	  
    else if ( trim( crtm_sensor_name(rtminit_sensor(n))) == 'giirs' ) then
-      nchanl(n)  = 981
+      nchanl(n)  = 961
       nscan(n)   = 128	  	  
    else
       call da_error(__FILE__,__LINE__, &
