@@ -420,7 +420,7 @@ subroutine da_read_obs_netcdf4ahi_geocat (iv, infile_tb, infile_clp)
             p%tb_inv(1:nchan)  = data_all(1:nchan)
             p%sensor_index     = inst
             p%ifgat            = ifgat
-			p%cloudflag        = cloud_mask(ilongitude,ilatitude)
+			if( got_clp_file ) p%cloudflag        = cloud_mask(ilongitude,ilatitude)
 
             allocate (p%next)   ! add next data
             p => p%next

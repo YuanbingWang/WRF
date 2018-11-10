@@ -25,7 +25,7 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
    integer,parameter::nfile_max = 8     ! each hdf file contains ~50min of data
                                         ! at most 8 files for a 6-h time window
 ! interface variable
-   integer iret                         ! return status
+   integer iret,rcode                         ! return status
    integer(HID_T) fhnd1       ! file handle
    integer(HID_T) dhnd1         ! dataset handle
    integer(HSIZE_T) sz1(2)              ! array size 1
@@ -47,12 +47,12 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
    integer(4)::ColumnNumber(nlongitude,nlatitude),LineNumber(nlongitude,nlatitude)
    integer(4) :: cloud_mask(nlongitude,nlatitude)     !obs cloud mask
    
-   real(4) :: latlonx,latlony,latlonsd1,latlonsd2,latlonsd3,latlonsd
+   real(4) :: latlonx,latlony,latlonsd1,latlonsd2,latlonsd3,latlonsd,LATLONSD00
    real(4) :: latlonsn,latlons1,latlons2,latlons3,latlonsxy
 			  
    real(r_kind),parameter  :: tbmin  = 50._r_kind
    real(r_kind),parameter  :: tbmax  = 550._r_kind
-   real(r_kind),parameter  :: tb_scale  = 100._r_kind
+   real(r_kind),parameter  :: tb_scale  = 1._r_kind
 
    real(kind=8)                   :: obs_time
    type (datalink_type),pointer   :: head, p, current, prev
@@ -294,7 +294,7 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
 	  
    ! read array: LineNumber
       call H5Dopen_f(fhnd1,'LineNumber',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_SHORT,LineNumber,sz1,iret,H5S_ALL_F,H5S_ALL_F)
+      call H5Dread_f(dhnd1,H5T_NATIVE_INTEGER,LineNumber,sz1,iret,H5S_ALL_F,H5S_ALL_F)
       if(iret.lt.0)then
          call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: LineNumber"/))
       endif
@@ -304,7 +304,7 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
 
    ! read array: ColumnNumber
       call H5Dopen_f(fhnd1,'ColumnNumber',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_SHORT,ColumnNumber,sz1,iret,H5S_ALL_F,H5S_ALL_F)
+      call H5Dread_f(dhnd1,H5T_NATIVE_INTEGER,ColumnNumber,sz1,iret,H5S_ALL_F,H5S_ALL_F)
       if(iret.lt.0)then
          call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: ColumnNumber"/))
       endif
@@ -386,6 +386,8 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
             num_agri_file       = num_agri_file + 1
             num_agri_file_local = num_agri_file_local + 1
 			
+			latlonsd00=1.0 !to be modified
+			
 			!caculation the latitude and longitude
 			latlonx=(ColumnNumber(ilongitude,ilatitude)-1373.5)*(65536*3.1415926)/(180*10233137)
 			latlony=(LineNumber(ilongitude,ilatitude)-1373.5)*(65536*3.1415926)/(180*10233137)
@@ -439,9 +441,7 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
             end if
 
             num_agri_used = num_agri_used + 1
-            data_all = missing_r
-			
-			tb_scale = 1.0
+            data_all = missing_r		
 
             tb = tb07(ilongitude,ilatitude) / tb_scale
             if( tb < tbmin .or. tb > tbmax ) tb = missing_r

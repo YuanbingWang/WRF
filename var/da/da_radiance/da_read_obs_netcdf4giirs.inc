@@ -30,8 +30,8 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
    real(4), allocatable :: vlatitude(:)  !  value for latitude 
    real(4), allocatable :: vlongitude(:) !  value for longitude
 
-   real(4), allocatable    :: tbb(:,:,:)  ! tb for band 7-16
-   real(4), allocatable    :: sat_zenith(:,:)
+   real(4), allocatable    :: tbb(:,:)  ! tb for band 7-16
+   real(4), allocatable    :: sat_zenith(:)
    
    real(r_kind),parameter  :: tbmin  = 50._r_kind
    real(r_kind),parameter  :: tbmax  = 550._r_kind
@@ -211,7 +211,7 @@ subroutine da_read_obs_netcdf4giirs (iv, infile_tb)
 			   (/"NETCDF4 read error for: Brightness Temperature"/))
 		endif	  		
    ! sample display
-	  !write(unit=stdout,fmt=*)'tbb(pixel=1,scan=1,chan=',k,'): ', tbb(1,1,1)	  
+	  !write(unit=stdout,fmt=*)'tbb(pixel=1,scan=1,chan=',k,'): ', tbb(1,1)	  
 	 
    ! read array: satellite zenith angle
    ! read

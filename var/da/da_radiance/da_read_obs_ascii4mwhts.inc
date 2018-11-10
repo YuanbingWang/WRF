@@ -1,4 +1,4 @@
-subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
+subroutine da_read_obs_ascii4mwhts (iv, infile_tb)
    !--------------------------------------------------------
    !  Purpose: read in MSHTS(rttov id: 23,3,73) Level-1 data in ASCII format
    !           and form innovation structure
@@ -38,7 +38,7 @@ subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
    type(info_type)                :: info
    type(model_loc_type)           :: loc
 
-   integer(i_kind), allocatable   :: idate5(6,:)
+   integer(i_kind), allocatable   :: idate5(:,:)
 
    integer(i_kind)   :: inst,platform_id,satellite_id,sensor_id
    real(r_kind)      :: tb, crit
@@ -65,7 +65,7 @@ subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
    real,allocatable             :: in(:), out(:)
    real(r_kind),allocatable     :: data_all(:)
 
-   if (trace_use) call da_trace_entry("da_read_obs_asciif4mwhts")
+   if (trace_use) call da_trace_entry("da_read_obs_ascii4mwhts")
 
 !  0.0  Initialize variables
 !-----------------------------------
@@ -94,7 +94,7 @@ subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
    if (inst == 0) then
       call da_warning(__FILE__,__LINE__, &
           (/"The combination of Satellite_Id and Sensor_Id for mwhs2 is not found"/))
-      if (trace_use) call da_trace_exit("da_read_obs_asciif4mwhts")
+      if (trace_use) call da_trace_exit("da_read_obs_ascii4mwhts")
       return
    end if
 
@@ -132,7 +132,7 @@ subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
    if ( nfile == 0 ) then
       call da_warning(__FILE__,__LINE__, &
          (/"No valid mwhs2 file found."/))
-      if (trace_use) call da_trace_exit("da_read_obs_asciif4mwhts")
+      if (trace_use) call da_trace_exit("da_read_obs_ascii4mwhts")
       return
    end if 
 
@@ -156,13 +156,13 @@ subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
    ! read array: tb for band 1-15
    ! read	 
       allocate(tbb(nfov,nscan,nchan)) 
-	  allocate(vlatitude(nfov,iscan))
-	  allocate(vlongitude(nfov,iscan))
-	  allocate(sat_zenith(nfov,iscan))
-	  allocate(sun_zenith(nfov,iscan))
-	  allocate(sat_azimuth(nfov,iscan))
-	  allocate(sun_azimuth(nfov,iscan))
-	  allocate(idate(6,iscan))
+	  allocate(vlatitude(nfov,nscan))
+	  allocate(vlongitude(nfov,nscan))
+	  allocate(sat_zenith(nfov,nscan))
+	  allocate(sun_zenith(nfov,nscan))
+	  allocate(sat_azimuth(nfov,nscan))
+	  allocate(sun_azimuth(nfov,nscan))
+	  allocate(idate5(6,nscan))
 	  do j=1,nscan
 		do i=1,nfov
            read(2017,*) sun_azimuth(i,j),sun_zenith(i,j),sat_azimuth(i,j),sat_zenith(i,j),&
@@ -276,7 +276,7 @@ subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
       deallocate(vlatitude)
       deallocate(vlongitude)
       deallocate(tbb)
-      deallocate(idate)  
+      deallocate(idate5)  
       deallocate(sat_zenith)
 	  deallocate(sun_zenith)
 	  deallocate(sat_azimuth)
@@ -423,6 +423,6 @@ subroutine da_read_obs_asciif4mwhts (iv, infile_tb)
    deallocate ( p )
    deallocate (ptotal)
 
-   if (trace_use) call da_trace_exit("da_read_obs_asciif4mwhts")
+   if (trace_use) call da_trace_exit("da_read_obs_ascii4mwhts")
    
-end subroutine da_read_obs_asciif4mwhts
+end subroutine da_read_obs_ascii4mwhts

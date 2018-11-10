@@ -31,6 +31,7 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
    real      :: cloud_amount(nchan)
    real      :: c1_cld,c0_clr
    real      :: fe,ft
+   integer   :: data_format,iret
 
    if (trace_use) call da_trace_entry("da_qc_ahi")
 
@@ -193,11 +194,29 @@ subroutine da_qc_ahi (it, i, nchan, ob, iv)
                    nrej_eccloud(k) = nrej_eccloud(k) + 1
          else
 		    !write(*,*) 'Read in cloud mask data from obs L2 files'
-            if (iv%instid(i)%cloudflag(n) < 3) then ! only use absolutely clear pixel
+			
+			!open the ahi info file 
+			open(unit=1990,file='ahi_info',status='old',iostat=iret)
+			if(iret /= 0)then
+				call da_error(__FILE__,__LINE__,(/"Read ahi_info error: no such file"/))
+			end if	  
+			!read ahi information
+			read(1990,*)  
+			read(1990,*) data_format  
+			close(1990)
+			
+            if (data_format==2 .and. iv%instid(i)%cloudflag(n) < 3) then ! only use absolutely clear pixel for clm from geocat
                 iv%instid(i)%tb_qc(:,n) = qc_bad
                 if (iv%instid(i)%info%proc_domain(1,n)) &
                     nrej_eccloud(k) = nrej_eccloud(k) + 1
             end if
+			
+	        if (data_format==3 .and. iv%instid(i)%cloudflag(n) > 0) then ! only use absolutely clear pixel for clt from jaxa
+                iv%instid(i)%tb_qc(:,n) = qc_bad
+                if (iv%instid(i)%info%proc_domain(1,n)) &
+                    nrej_eccloud(k) = nrej_eccloud(k) + 1
+            end if		
+			
          end if
 		 
          end do

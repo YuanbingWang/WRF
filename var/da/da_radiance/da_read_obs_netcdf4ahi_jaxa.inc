@@ -249,12 +249,15 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
       iret = nf90_open(fname_clp(ifile), NF90_NOWRITE, ncid)
       if ( iret == 0 ) then
          got_clp_file = .true.
-      endif
+      else
+         call da_warning(__FILE__,__LINE__, &
+              (/"Cannot find NETCDF4 file "//trim(fname_clp(ifile))/))	 	 
+      end if
 	  
       if ( got_clp_file ) then
 		! read array: satellite zenith angle 
           rcode = nf90_inq_varid(ncid, 'CLTYPE', cltyid)
-          allocate( cloud_type(nlongitude,nlatitude))
+          allocate(cloud_type(nlongitude,nlatitude))
 		  iret = nf90_get_var(ncid, cltyid, cloud_type)
           if(iret /= 0)then
             call da_warning(__FILE__,__LINE__,(/"NETCDF4 read error for: CLTYPE data"/))
@@ -351,7 +354,7 @@ subroutine da_read_obs_netcdf4ahi_jaxa (iv, infile_tb, infile_clp)
             p%tb_inv(1:nchan)  = data_all(1:nchan)
             p%sensor_index     = inst
             p%ifgat            = ifgat
-			p%cloudflag        = cloud_type(ilongitude,ilatitude)
+			if( got_clp_file ) p%cloudflag        = cloud_type(ilongitude,ilatitude)
 
             allocate (p%next)   ! add next data
             p => p%next

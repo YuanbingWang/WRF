@@ -250,7 +250,7 @@ subroutine da_setup_radiance_structures( grid, ob, iv )
 
       if (use_giirsobs) then
          write(unit=stdout,fmt='(a)') 'Reading radiance 1b data from obs.mwhs2'
-         call da_read_obs_netcdf4giirs.inc (iv, 'obs.giirs')
+         call da_read_obs_netcdf4giirs (iv, 'obs.giirs')
       end if	  
 	  
    end if
