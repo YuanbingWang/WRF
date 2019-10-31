@@ -240,6 +240,7 @@ contains
 #include "da_qc_amsr2.inc"
 #include "da_qc_agri.inc"
 #include "da_qc_ahi.inc"
+#include "da_qc_geoms.inc"
 #include "da_qc_giirs.inc"
 #include "da_write_iv_rad_ascii.inc"
 #include "da_write_oa_rad_ascii.inc"

@@ -79,7 +79,7 @@ module module_radiance
         & 'kalpana ', 'reserved', 'fy3     ', 'coms    ', 'meteor-m',  &
         & 'gosat   ', 'calipso ', 'reserved', 'gcom-w  ', 'nimbus  ',  &
         & 'himawari', 'mtg     ', 'saral   ', 'metop-ng', 'landsat ',  &
-		& 'reserved', 'reserved', 'reserved', 'mwhs-2  ', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'reserved  ', 'reserved',  &
 		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
 		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
 		& 'reserved', 'fy4     ', 'reserved', 'reserved', 'reserved',  &
@@ -102,7 +102,7 @@ module module_radiance
         & 'smmr    ', 'ahi     ', 'irs     ', 'altika  ', 'iasing  ',  &
         & 'tm      ', 'fci     ', 'amsr1   ', 'amsr2   ', 'vissr   ',  &
         & 'slstr   ', 'reserved', 'reserved', 'reserved', 'reserved',  &
-		& 'reserved', 'reserved', 'reserved', 'mwhs-2  ', 'reserved',  &
+		& 'reserved', 'reserved', 'reserved', 'mwhs-2', 'reserved',  &
 		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
 		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &
 		& 'reserved', 'reserved', 'reserved', 'reserved', 'reserved',  &

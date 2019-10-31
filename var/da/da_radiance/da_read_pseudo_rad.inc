@@ -70,9 +70,12 @@ subroutine da_read_pseudo_rad (iv)
    else if (sensor_id == 73)  then
       !mwhts
       nchan = 15
+   else if (sensor_id == 19)  then
+      !geoms
+      nchan = 22	
    else if (sensor_id == 98)  then
       !giirs
-      nchan = 961	  
+      nchan = 961	    
    else
       call da_error(__FILE__,__LINE__, &
            (/"Error in setting up pseudo radiance, unknown sensor_id."/))

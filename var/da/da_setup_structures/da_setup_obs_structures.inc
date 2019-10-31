@@ -56,6 +56,7 @@ subroutine da_setup_obs_structures( grid, ob, iv, j_cost)
       use_mhsobs           = .false.
       use_msuobs           = .false.
 	  use_ahiobs           = .false.
+	  use_geomsobs         = .false.
 	  use_agriobs          = .false.
 	  use_giirsobs         = .false.
 	  use_mwhs2obs         = .false.	  
@@ -95,7 +96,8 @@ subroutine da_setup_obs_structures( grid, ob, iv, j_cost)
       use_hsbobs .OR. use_kma1dvar .OR. use_filtered_rad .OR. use_giirsobs .OR. & 
       use_ssmisobs .OR. use_hirs4obs .OR. use_mhsobs .OR. use_pseudo_rad .OR. &
       use_mwtsobs  .OR. use_mwhsobs .OR. use_atmsobs .OR. use_simulated_rad .OR. &
-      use_iasiobs .OR. use_seviriobs .OR. use_amsr2obs .OR. use_ahiobs .OR. use_mwhs2obs) then
+      use_iasiobs .OR. use_seviriobs .OR. use_amsr2obs .OR. use_ahiobs .OR. &
+	  use_mwhs2obs .OR. use_geomsobs) then
       use_rad = .true.
    else
       use_rad = .false.
@@ -150,6 +152,7 @@ subroutine da_setup_obs_structures( grid, ob, iv, j_cost)
 	  use_agriobs          = .false.
 	  use_giirsobs         = .false.
 	  use_mwhs2obs         = .false.
+	  use_geomsobs         = .false.
       use_obsgts           = .false.
       use_rad              = .false.
       use_airsretobs       = .false.

@@ -67,6 +67,7 @@ subroutine da_qc_rad (it, ob, iv)
 	  ahi = trim(rttov_inst_name(rtminit_sensor(i))) == 'ahi'
 	  giirs = trim(rttov_inst_name(rtminit_sensor(i))) == 'giirs'
 	  mwhs2 = trim(rttov_inst_name(rtminit_sensor(i))) == 'mwhs-2'
+	  geoms = trim(rttov_inst_name(rtminit_sensor(i))) == 'geoms'
 	  
       if (hirs) then
          ! 1.0 QC for HIRS
@@ -106,7 +107,9 @@ subroutine da_qc_rad (it, ob, iv)
       else if (giirs) then
          call da_qc_giirs(it,i,nchan,ob,iv)		 
       else if (mwhs2) then
-         call da_qc_mwhts(it,i,nchan,ob,iv)		 
+         call da_qc_mwhts(it,i,nchan,ob,iv)		
+      else if (geoms) then
+         call da_qc_geoms(it,i,nchan,ob,iv)				 
       else
          write(unit=message(1),fmt='(A,A)') &
             "Unrecognized instrument",trim(rttov_inst_name(rtminit_sensor(i)))

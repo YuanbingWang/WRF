@@ -407,10 +407,10 @@ da_setup_structures.o :
          fi
 	if $(FGREP) '!$$OMP' $*.f ; then \
           if [ -n "$(OMP)" ] ; then echo COMPILING $*.f90 WITH OMP ; fi ; \
-	  $(FC) -c $(FCFLAGS) $(OMP) $(PROMOTION) $(CRTM_SRC) $(RTTOV_SRC) $(HDF5_INC) $*.f ; \
+	  $(FC) -c $(FCFLAGS) $(OMP) $(PROMOTION) $(CRTM_SRC) $(RTTOV_SRC) $(HDF5_INC) -I$(NETCDF)/include $*.f ; \
         else \
 	if [ -n "$(OMP)" ] ; then echo COMPILING $*.f90 WITHOUT OMP ; fi ; \
-	  $(FC) -c $(FCFLAGS) $(PROMOTION) $(CRTM_SRC) $(RTTOV_SRC) $(HDF5_INC) $*.f ; \
+	  $(FC) -c $(FCFLAGS) $(PROMOTION) $(CRTM_SRC) $(RTTOV_SRC) $(HDF5_INC) -I$(NETCDF)/include $*.f ; \
         fi
 
 da_obs_io.o \
@@ -449,10 +449,10 @@ da_minimisation.o :
         fi
 	if $(FGREP) '!$$OMP' $*.f ; then \
           if [ -n "$(OMP)" ] ; then echo COMPILING $*.f90 WITH OMP ; fi ; \
-	  $(FC) -c $(FCFLAGS) $(OMP) $(PROMOTION) $(CRTM_SRC) $(RTTOV_SRC) $(WRFPLUS_INC) $(HDF5_INC) $*.f ; \
+	  $(FC) -c $(FCFLAGS) $(OMP) $(PROMOTION) $(CRTM_SRC) $(RTTOV_SRC) $(WRFPLUS_INC) $(HDF5_INC) -I$(NETCDF)/include $*.f ; \
         else \
           if [ -n "$(OMP)" ] ; then echo COMPILING $*.f90 WITHOUT OMP ; fi ; \
-	  $(FC) -c $(FCFLAGS) $(PROMOTION) $(CRTM_SRC) $(RTTOV_SRC) $(WRFPLUS_INC) $(HDF5_INC) $*.f ; \
+	  $(FC) -c $(FCFLAGS) $(PROMOTION) $(CRTM_SRC) $(RTTOV_SRC) $(WRFPLUS_INC) $(HDF5_INC) -I$(NETCDF)/include $*.f ; \
         fi
 
 da_blas.o \

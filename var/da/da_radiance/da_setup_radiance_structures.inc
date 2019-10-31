@@ -204,7 +204,7 @@ subroutine da_setup_radiance_structures( grid, ob, iv )
       if (use_agriobs) then
 #if defined(HDF5)
          write(unit=stdout,fmt='(a)') 'Reading AGRI data in HDF5 format'
-         call da_read_obs_hdf5agri (iv, 'L1AGRITBR', 'L2AGRICLP')
+         call da_read_obs_hdf5agri (iv, 'L1AGRITBR', 'L1AGRIGEO', 'L2AGRICLP')
 #else
          message(1)='To read AGRI data, WRFDA must be compiled with HDF5'
          call da_error(__FILE__,__LINE__,message(1:1))
@@ -251,6 +251,11 @@ subroutine da_setup_radiance_structures( grid, ob, iv )
       if (use_giirsobs) then
          write(unit=stdout,fmt='(a)') 'Reading radiance 1b data from obs.mwhs2'
          call da_read_obs_netcdf4giirs (iv, 'obs.giirs')
+      end if	  
+	  
+      if (use_geomsobs) then
+         write(unit=stdout,fmt='(a)') 'Reading radiance 1b data from obs.mwhs2'
+         call da_read_obs_ascii4mwhts (iv, 'obs.geoms')
       end if	  
 	  
    end if

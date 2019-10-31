@@ -1,6 +1,6 @@
-subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
+subroutine da_read_obs_hdf5agri (iv, infile_tb, infile_geo, infile_clm)        !da_setup_radiance_structures(iv, 'agri', 'geo','clm')
    !--------------------------------------------------------
-   !  Purpose: read in CMA AGRI Level-1B HDF5 and Level-2 data in NETCDF format
+   !  Purpose: read in FY4 AGRI data in HDF5 format
    !           and form innovation structure
    !
    !   METHOD: use F90 sequantial data structure to avoid read the file twice
@@ -8,92 +8,109 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
    !            2. do gross QC check
    !            3. assign sequential data structure to innovation structure
    !                  and deallocate sequential data structure
-   !
-   !  HISTORY: 2018/06/10 - Creation         Yuanbing Wang, NUIST/CAS
    !------------------------------------------------------------------------------
 
    implicit none
 
-   character(len=*), intent(in)    :: infile_tb, infile_clp
+   character(len=*), intent(in)    :: infile_tb,infile_geo,infile_clm                                                
    type(iv_type),    intent(inout) :: iv
 
-#if defined(HDF5)
+#if defined(HDF5)                                                                             
 ! fixed parameter values
-   integer,parameter::nlatitude=2748          ! Maximum allowed NumberOfScans
-   integer,parameter::nlongitude=2748          ! low  resolution pixel width
-   integer,parameter::time_dims=6       ! Time dimension
-   integer,parameter::nfile_max = 8     ! each hdf file contains ~50min of data
-                                        ! at most 8 files for a 6-h time window
-! interface variable
-   integer iret,rcode                         ! return status
-   integer(HID_T) fhnd1       ! file handle
-   integer(HID_T) dhnd1         ! dataset handle
-   integer(HSIZE_T) sz1(2)              ! array size 1
-   
-! array data
-   real(8) :: vlatitude(nlongitude,nlatitude)  !  value for latitude 
-   real(8) :: vlongitude(nlongitude,nlatitude) !  value for longitude
+   integer,parameter::nscan=2748        ! Maximum allowed NumberOfScans                          
+   integer,parameter::fov=2748          ! high resolution pixel width                            
+   integer,parameter::time_dims=6       ! Time dimension                                         
+   integer,parameter::nfile_max = 7    ! each hdf file contains ~15min of data                  
+                                        ! at most 12 files for a 6-h time window
+   integer,parameter::h=42164
+   integer,parameter::CFAC=10233137
+   integer,parameter::LFAC=10233137
+   real,parameter::pai=3.1415926536
+   real,parameter::ea=6378.137
+   real,parameter::eb=6356.7523
+   real,parameter::cetlon=104.7
+   real,parameter::COFF=1375.5
+   real,parameter::LOFF=1375.5
 
-   real(4) :: tb07(nlongitude,nlatitude)  ! tb for band 7
-   real(4) :: tb08(nlongitude,nlatitude)  ! tb for band 8
-   real(4) :: tb09(nlongitude,nlatitude)  ! tb for band 9
-   real(4) :: tb10(nlongitude,nlatitude)  ! tb for band 10
-   real(4) :: tb11(nlongitude,nlatitude)  ! tb for band 11
-   real(4) :: tb12(nlongitude,nlatitude)  ! tb for band 12
-   real(4) :: tb13(nlongitude,nlatitude)  ! tb for band 13
-   real(4) :: tb14(nlongitude,nlatitude)  ! tb for band 14
-
-   real(4) :: sat_zenith(nlongitude,nlatitude)  ! satellite_zenith_angle
-   integer(4)::ColumnNumber(nlongitude,nlatitude),LineNumber(nlongitude,nlatitude)
-   integer(4) :: cloud_mask(nlongitude,nlatitude)     !obs cloud mask
-   
-   real(4) :: latlonx,latlony,latlonsd1,latlonsd2,latlonsd3,latlonsd,LATLONSD00
-   real(4) :: latlonsn,latlons1,latlons2,latlons3,latlonsxy
-			  
-   real(r_kind),parameter  :: tbmin  = 50._r_kind
+! interface variable                    
+   integer iret
+   integer(HID_T) fhnd1                 ! file handle                                            
+   integer(HID_T) ahnd1                 ! attribute handle                                       
+   integer(HID_T) dhnd1                 ! dataset handle                                         
+   integer(HID_T) shnd1                 ! dataspace handle                                       
+   integer(HSIZE_T) sz1(3)              ! array size 1                                           
+   integer(HSIZE_T) sz2(3)              ! array size 2
+    
+! array data            
+   integer(4) l(fov,nscan),c(fov,nscan)
+   real(8) x1,y1,sd,sn,s1,s2,s3,sxy
+   character(4) year_c,month_c,day_c,hour_c,minute_c,second_c
+   real(8) timehdf(2,nscan)
+   character(19) trans_time
+   integer(8) int_time(2,nscan)
+   integer::year=0,month=0,day=0,hour=0,minute=0,second=0 
+   real(4) :: lat(fov,nscan)            ! lat                             
+   real(4) :: lon(fov,nscan)            ! lon 
+!  integer(4) :: lof(fov,nscan)         ! land ocean flag                             
+   integer(1) :: clm(fov,nscan)
+   real(4)    :: sun_az(fov,nscan)      ! sun_azimuth                                          
+   real(4)    :: sat_az(fov,nscan)                                                    
+   real(4)    :: sun_zen(fov,nscan)     ! sun_zenith                                            
+   real(4)    :: sat_zen(fov,nscan)                                                     
+   real(r_kind),parameter  :: tbmin  = 50._r_kind                                                   
    real(r_kind),parameter  :: tbmax  = 550._r_kind
-   real(r_kind),parameter  :: tb_scale  = 1._r_kind
 
-   real(kind=8)                   :: obs_time
+   real(kind=8)                   :: obs_time                                                         
    type (datalink_type),pointer   :: head, p, current, prev
-   type(info_type)                :: info
-   type(model_loc_type)           :: loc
-
-   integer(i_kind)   :: idate5(6)
-   integer(i_kind)   :: inst,platform_id,satellite_id,sensor_id,clmid,ncid
-   real(r_kind)      :: tb, crit
+   type(info_type)                :: info                                                                                          
+   type(model_loc_type)           :: loc                                   
+   integer(i_kind)    :: idate5(6)                                                                   
+   integer(i_kind)   :: inst,platform_id,satellite_id,sensor_id                                    
+   real(r_kind)      :: tb1, crit
    integer(i_kind)   :: ifgat, iout, iobs
    logical           :: outside, outside_all, iuse
-
-   integer           :: i,j,k,l,m,n, ifile,landsea_mask
+   integer           :: i,j,k,m,n,a,ifile, landsea_mask ,ncid, dimid, varid,ierr
    logical           :: found, head_found, head_allocated
 
 ! Other work variables
-   real(r_kind)     :: dlon_earth,dlat_earth
-   integer(i_kind)  :: num_agri_local, num_agri_global, num_agri_used, num_agri_thinned
+   real(r_kind)     :: dlon_earth,dlat_earth                                                           
+   integer(i_kind)  :: num_agri_local, num_agri_global, num_agri_used, num_agri_thinned                   
    integer(i_kind)  :: num_agri_used_tmp, num_agri_file
    integer(i_kind)  :: num_agri_local_local, num_agri_global_local, num_agri_file_local
    integer(i_kind)  :: itx, itt
-   character(80)    :: filename1, filename2
-   integer          :: nchan,ilongitude,ilatitude,ichannels
+   character(80)    :: filename1,filename2,filename3  
+   integer          :: nchan,ifov,iscan,ichannels
    integer          :: nfile
-   character(80)    :: fname_tb(nfile_max)
-   character(80)    :: fname_clp(nfile_max)
-   logical          :: fexist, got_clp_file
+   character(80)    :: fname_tb(nfile_max),fname_geo(nfile_max),fname_clm(nfile_max)
+   logical          :: fexist
 
-! Allocatable arrays
+! Allocatable arrays                                           
    integer(i_kind),allocatable  :: ptotal(:)
    real,allocatable             :: in(:), out(:)
    real(r_kind),allocatable     :: data_all(:)
-
+   real,allocatable             :: obstime(:,:)
+   real(4),allocatable          :: sunglint(:,:)
+   integer,parameter  :: num_chan=7
+   integer(4)         :: nom(fov,nscan,num_chan)
+   character(len=80) nom_name(num_chan)
+   data nom_name/'NOMChannel08','NOMChannel09','NOMChannel10',&
+                 'NOMChannel11','NOMChannel12',&
+                 'NOMChannel13','NOMChannel14'/
+   real(4)            :: cal(4096,num_chan)
+   character(len=80) cal_name(num_chan)
+   data cal_name/'CALChannel08','CALChannel09','CALChannel10',&
+                 'CALChannel11','CALChannel12',&
+                 'CALChannel13','CALChannel14'/
+   real(4)            :: tb(fov,nscan,num_chan)             ! tb 
+   include "netcdf.inc"
    if (trace_use) call da_trace_entry("da_read_obs_hdf5agri")
 
-!  0.0  Initialize variables
+!  0.0  Initialize variables                                 
 !-----------------------------------
    head_allocated = .false.
-   platform_id  = 52  ! Table-2 Col 1 corresponding to 'himawari'
-   satellite_id = 1   ! Table-2 Col 3
-   sensor_id    = 99  ! Table-3 Col 2 corresponding to 'agri'
+   platform_id  = 52  ! rttov user guide Table-2 Col 1 corresponding to 'fy4'         
+   satellite_id = 1   ! Table-2 Col 3   use fy-4a id 
+   sensor_id    = 99 ! Table-3 Col 2 corresponding to 'fy4-1-agri'
 
    allocate(ptotal(0:num_fgat_time))
    ptotal(0:num_fgat_time) = 0
@@ -103,11 +120,8 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
    num_agri_global  = 0
    num_agri_used    = 0
    num_agri_thinned = 0
-   
-   sz1(1)=nlongitude
-   sz1(2)=nlatitude  
 
-   do i = 1, rtminit_nsensor
+   do i = 1, rtminit_nsensor                                            
       if (platform_id  == rtminit_platform(i) &
           .and. satellite_id == rtminit_satid(i)    &
           .and. sensor_id    == rtminit_sensor(i)) then
@@ -115,248 +129,378 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
          exit
       end if
    end do
-   if (inst == 0) then
+   
+   if (inst == 0) then                                                                          
       call da_warning(__FILE__,__LINE__, &
-          (/"The combination of Satellite_Id and Sensor_Id for AHI is not found"/))
+          (/"The combination of Satellite_Id and Sensor_Id for fy-4 is not found"/))            
       if (trace_use) call da_trace_exit("da_read_obs_hdf5agri")
       return
    end if
 
-! Initialize HDF5 library and Fortran90 interface
-   call H5open_f(iret)
+! Initialize HDF5 library and Fortran90 interface                                            
+   call H5open_f(iret)                                                                       
    if(iret.lt.0)then
-      call da_warning(__FILE__,__LINE__,(/"Problems initializing HDF5 Lib, can't read AHI data."/))
+      call da_warning(__FILE__,__LINE__, &
+           (/"Problems in Initializing HDF5 library. Can not read fy-4 AGRI HDF5 data. "/))
       if (trace_use) call da_trace_exit("da_read_obs_hdf5agri")
       return
-   endif
+   end if
 
-   nchan = iv%instid(inst)%nchan
-   write(unit=stdout,fmt=*)'AHI nchan: ',nchan
-   allocate(data_all(1:nchan))
+   nchan = iv%instid(inst)%nchan                                                              
+   write(unit=stdout,fmt=*)'fy4 agri nchan: ',nchan                                             
+   allocate(data_all(1:nchan))                                                                 
 
-! 1.0 Assign file names and prepare to read agri files
+! 1.0 Assign file names and prepare to read fy4 agri files                                        
 !-------------------------------------------------------------------------
    nfile       = 0  !initialize
    fname_tb(:) = '' !initialize
-   ! first check if hdf file is available
+   ! first check if agri.hdf is available                                                  
    filename1 = trim(infile_tb)
-   filename2 = trim(infile_clp)
-   inquire (file=filename1, exist=fexist)
+   inquire (file=filename1, exist=fexist)                                                   
    if ( fexist ) then
       nfile = 1
       fname_tb(nfile)  = filename1
-      fname_clp(nfile) = filename2
    else
-      ! check if L1SGRTBR-0x.h5 is available for multiple input files
+      ! check if agri-0x.hdf is available for multiple input files                         
       ! here 0x is the input file sequence number
       ! do not confuse it with fgat time slot index
-      do i = 1, nfile_max
-         write(filename1,fmt='(A,A,I2.2,A)') trim(infile_tb),'-',i
-         write(filename2,fmt='(A,A,I2.2,A)') trim(infile_clp),'-',i
+      do i = 1, nfile_max                                                                    
+         write(filename1,fmt='(A,2I1)') trim(infile_tb),0,i	 
          inquire (file=filename1, exist=fexist)
          if ( fexist ) then
             nfile = nfile + 1
             fname_tb(nfile)  = filename1
-            fname_clp(nfile) = filename2
          else
             exit
          end if
       end do
    end if
-
-   if ( nfile == 0 ) then
-      call da_warning(__FILE__,__LINE__,(/"No valid AHI file found."/))
+   	  
+   if ( nfile == 0 ) then                                                                
+      call da_warning(__FILE__,__LINE__, &
+         (/"No valid fy-4 agri.hdf or agri-01.hdf file found."/))
+      if (trace_use) call da_trace_exit("da_read_obs_hdf5agri")
+      return
+   end if
+   
+  ! fy4 agri geo.hdf 
+   nfile       = 0
+   fname_geo = '' !initialize
+   ! check if geo.hdf is available 
+   filename2 = trim(infile_geo)                                                        
+   inquire (file=filename2, exist=fexist)                                                    
+   if ( fexist ) then
+       nfile=1
+       fname_geo  = filename2
+   else
+      ! check if geo-0x.hdf is available for multiple input files                         
+      ! here 0x is the input file sequence number
+      ! do not confuse it with fgat time slot index
+      do i = 1, nfile_max 
+		 write(filename2,fmt='(A,2I1)') trim(infile_geo),0,i                    
+         inquire (file=filename2, exist=fexist)
+         if ( fexist ) then
+            nfile = nfile + 1
+            fname_geo(nfile)  = filename2
+         else
+            exit
+         end if
+      end do
+   end if  
+	  
+   if ( nfile == 0 ) then                                                                
+      call da_warning(__FILE__,__LINE__, &
+         (/"No valid fy-4 agri geo.hdf or geo-01.hdf file found."/))
+      if (trace_use) call da_trace_exit("da_read_obs_hdf5agri")
+      return
+   end if
+   
+  ! clm.nc 
+   nfile       = 0
+   fname_clm = '' !initialize
+   ! check if clm.nc is available 
+   filename3 = trim(infile_clm)                                                      
+   inquire (file=filename3, exist=fexist)                                                    
+   if ( fexist ) then
+       nfile=1
+       fname_clm  = filename3
+   else
+      ! check if clm-01.nc is available for multiple input files                         
+      ! here 0x is the input file sequence number
+      ! do not confuse it with fgat time slot index
+      do i = 1, nfile_max    
+         write(filename3,fmt='(A,2I1)') trim(infile_clm),0,i                        
+         inquire (file=filename3, exist=fexist)
+         if ( fexist ) then
+            nfile = nfile + 1
+            fname_clm(nfile)  = filename3
+         else
+            exit
+         end if
+      end do
+   end if  
+	  
+   if ( nfile == 0 ) then                                                                
+      call da_warning(__FILE__,__LINE__, &
+         (/"No valid fy-4 clm.nc or clm-01.nc file found."/))
       if (trace_use) call da_trace_exit("da_read_obs_hdf5agri")
       return
    end if
 
-  !open the data info file 
-   open(unit=1990,file='agri_info',status='old',iostat=iret)
-   if(iret /= 0)then
-      call da_warning(__FILE__,__LINE__,(/"data_info file read error"/))
-   endif
-   read(1990,*) 
-   read(1990,*)
-   read(1990,*)
-   read(1990,*)
-   read(1990,*)
-   read(1990,*)
-   read(1990,*)
-   
-   infile_loop:  do ifile = 1, nfile
+   ! read file: agri and geo and clm for fy4 agri data
+  
+   infile_loop:  do ifile = 1, nfile                                                    
       num_agri_file_local    = 0
       num_agri_local_local   = 0
       num_agri_global_local  = 0
 
-   ! open infile_tb HDF5 file for read
-      call H5Fopen_f(fname_tb(ifile),H5F_ACC_RDONLY_F,fhnd1,iret,H5P_DEFAULT_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"Cannot open HDF5 file"//trim(fname_tb(ifile))/))
+   ! open HDF5 file for read
+      call H5Fopen_f(fname_tb(ifile),H5F_ACC_RDONLY_F,fhnd1,iret,H5P_DEFAULT_F)                                    
+      if(iret.lt.0)then                                                                                            
+         call da_warning(__FILE__,__LINE__, &
+              (/"Cannot open HDF5 file "//trim(fname_tb(ifile))/))
          cycle infile_loop
-      endif  
-
-   ! read tb for band 7
-      call H5Dopen_f(fhnd1,'NOMChannel07',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_REAL,tb07,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: Band 7"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*) 'tb07(pixel=1,scan=1): ',tb07(1,1)	  
-	  
-   ! read tb for band 8
-      call H5Dopen_f(fhnd1,'NOMChannel08',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_REAL,tb08,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: Band 8"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*) 'tb08(pixel=1,scan=1): ',tb08(1,1)
-
-   ! read tb for band 9
-      call H5Dopen_f(fhnd1,'NOMChannel09',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_REAL,tb09,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: Band 9"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*) 'tb09(pixel=1,scan=1): ',tb09(1,1)
-
-   ! read tb for band 10
-      call H5Dopen_f(fhnd1,'NOMChannel10',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_REAL,tb10,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: Band 10"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*) 'tb10(pixel=1,scan=1): ',tb10(1,1)
-
-   ! read tb for band 11
-      call H5Dopen_f(fhnd1,'NOMChannel11',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_REAL,tb11,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: Band 11"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*) 'tb11(pixel=1,scan=1): ',tb11(1,1)		 
-
-   ! read tb for band 12
-      call H5Dopen_f(fhnd1,'NOMChannel12',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_REAL,tb12,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: Band 12"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*) 'tb12(pixel=1,scan=1): ',tb12(1,1)		
-
-   ! read tb for band 13
-      call H5Dopen_f(fhnd1,'NOMChannel13',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_REAL,tb13,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: 13"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*) 'tb13(pixel=1,scan=1): ',tb13(1,1)	 
-
-   ! read tb for band 14
-      call H5Dopen_f(fhnd1, 'NOMChannel14',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_REAL,tb14,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: Band 14"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*) 'tb14(pixel=1,scan=1): ',tb14(1,1)	
-
-   ! close infile_tb and HDF5
-      call H5Fclose_f(fhnd1,iret)	  
-
-	  
-   ! open infile for reading geo data
-      call H5Fopen_f('L1AGRIGEO',H5F_ACC_RDONLY_F,fhnd1,iret,H5P_DEFAULT_F)
-	  
-   ! read array: satellite_zenith_angle
-      call H5Dopen_f(fhnd1,'NOMSatelliteZenith',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_IEEE_F32BE,sat_zenith,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: satellite_zenith_angle"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*)'sat_zenith(pixel=1,scan=1): ',sat_zenith(1,1)
-	  
-   ! read array: LineNumber
-      call H5Dopen_f(fhnd1,'LineNumber',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_INTEGER,LineNumber,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: LineNumber"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*)'LineNumber(pixel=1,scan=1): ',LineNumber(1,1)	 
-
-   ! read array: ColumnNumber
-      call H5Dopen_f(fhnd1,'ColumnNumber',dhnd1,iret)
-      call H5Dread_f(dhnd1,H5T_NATIVE_INTEGER,ColumnNumber,sz1,iret,H5S_ALL_F,H5S_ALL_F)
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: ColumnNumber"/))
-      endif
-      call H5Dclose_f(dhnd1,iret)
-   ! sample display
-      write(unit=stdout,fmt=*)'ColumnNumber(pixel=1,scan=1): ',ColumnNumber(1,1)	  
-
-   ! close infile_geo and HDF5	  
-	  call H5Fclose_f(fhnd1,iret)
-
-	  
-     !open infile_clp file 
-      got_clp_file = .false.
-      iret = nf90_open(fname_clp(ifile), NF90_NOWRITE, ncid)
-      if ( iret == 0 ) then
-         got_clp_file = .true.
       end if
-	  
-      if ( got_clp_file ) then
-		! read array: cloud mask 
-          rcode = nf90_inq_varid(ncid, 'CLM', clmid)
-		  iret = nf90_get_var(ncid, clmid, cloud_mask)
-          if(iret /= 0)then
-            call da_warning(__FILE__,__LINE__,(/"NETCDF4 read error for: cloud_mask data"/))
-          endif
-        ! sample display
-          !write(unit=stdout,fmt=*)'cloud_mask(pixel=1,scan=1): ',cloud_mask(1,1)		 
-		! close infile_clp file 		 
-		  iret = nf90_close(ncid)		 	 
-      end if 
-	  
-   ! read binary latlon
-      open(520,file='L1AGRILATLON',access='direct',form='unformatted', &
-	           recl=8,convert='little_endian',iostat=iret) 
-      if(iret.lt.0)then
-         call da_warning(__FILE__,__LINE__,(/"HDF5 read error for: Latitude"/))
-      end if	  
-	  k = 0
-	  do j = 1,2748
-		do i = 1,2748
-			read(520,rec=k) vlongitude(i,j)
-			k = k + 1
-			read(520,rec=k) vlatitude(i,j)
-		end do
-	  end do
-      close(520)  
-   ! sample display
-      write(unit=stdout,fmt=*)'latitude,longitude(pixel=1,scan=1): ',vlatitude(1,1),vlongitude(1,1)	  
+      
+   ! read array: scantime
+   ! read
+      call H5Dopen_f(fhnd1,'NOMObsTime',dhnd1,iret)                                                
+        sz1(1)=nscan
+        sz1(2)=2
+      call H5Dread_f(dhnd1, &
+         H5T_NATIVE_DOUBLE,timehdf(:,:),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+           if(iret.lt.0)then
+              call da_warning(__FILE__,__LINE__, &
+               (/"HDF5 read error for: Obs Time"/))
+           endif
+      call H5Dclose_f(dhnd1,iret)
+      allocate  (obstime(1:time_dims,1:nscan))  ! year, month, day, hour, min, sec             
+      do iscan=1,nscan
+          int_time(1,iscan)=int(timehdf(1,iscan),8)
+          if(int_time(1,iscan) .ne. 9999) then
+             write(trans_time,"(I17)") int_time(1,iscan)
+             year_c=trans_time(1:4)
+             month_c=trans_time(5:6)
+             day_c=trans_time(7:8)
+             hour_c=trans_time(9:10)
+             minute_c=trans_time(11:12)
+             second_c=trans_time(13:14)
+             read(year_c,*) year 
+             read(month_c,*) month
+             read(day_c,*) day
+             read(hour_c,*) hour
+             read(minute_c,*) minute
+             read(second_c,*) second
+             obstime(1,iscan) = year
+             obstime(2,iscan) = month
+             obstime(3,iscan) = day
+             obstime(4,iscan) = hour
+             obstime(5,iscan) = minute
+             obstime(6,iscan) = second
+		   end if
+      end do
+      write(unit=stdout,fmt=*)'time(scan=1500) year: ',obstime(1,1500),' month:',obstime(2,1500),' day: ',obstime(3,1500),&
+         ' hour: ',obstime(4,1500),' minute: ',obstime(5,1500),' second: ',obstime(6,1500)                 
+      
+   !read brightness temperature               !
+   ! read array: nom for gray scale                                    
+      do k=1,num_chan
+         call H5Dopen_f(fhnd1,nom_name(k),dhnd1,iret)                           
+            sz1(1)=nscan
+            sz1(2)=fov
+         call H5Dread_f(dhnd1, &                                                         
+            H5T_NATIVE_INTEGER,nom(:,:,k),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+         if(iret.lt.0)then
+            call da_warning(__FILE__,__LINE__, &
+                  (/"HDF5 read error for: Gray Scale"/))
+         endif
+         call H5Dclose_f(dhnd1,iret)                                                   
+         if (print_detail_rad) then
+             write(unit=message(1),fmt='(A,I6,A,I6)')&
+               'nom(pixel=1499,scan=1500,chan=',k,'): ',nom(1500,1499,k)                                     
+             call da_message(message(1:1))
+         endif
+      end do
+      
+   ! read array: cal for calibration                                  
+      do k=1,num_chan
+         call H5Dopen_f(fhnd1,cal_name(k),dhnd1,iret)                           
+            sz1(1)=4096
+         call H5Dread_f(dhnd1, &                                                         
+            H5T_NATIVE_REAL,cal(:,k),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+         if(iret.lt.0)then
+            call da_warning(__FILE__,__LINE__, &
+                  (/"HDF5 read error for: calibration"/))
+         endif
+         call H5Dclose_f(dhnd1,iret)                                                   
+         if (print_detail_rad) then
+            write(unit=message(1),fmt='(A,I6,A,F10.4)')&
+               'cal(number=500,chan=',k,'): ',cal(500,k)                    
+            call da_message(message(1:1))
+         endif
+      end do
 
-	 !read date information	  
-	  read(1990,*) idate5(1),idate5(2),idate5(3),idate5(4),idate5(5),idate5(6)
+   ! calculate IR brightness temperature 
+     do k=1,7
+       do j=1,2748
+         do i=1,2748
+           a=nom(i,j,k)
+           if (a.eq.65535) then
+             tb(i,j,k)=-999.
+           else
+             tb(i,j,k)=cal(a+1,k)
+           end if
+         end do
+       end do
+     end do
+   ! sample play
+      write(unit=message(1),fmt='(A,I6,A,F10.4)')&
+        'tb(fov=1000,scan=1000,chan=',2,'): ',tb(1000,1000,2)
+      call da_message(message(1:1))
+   ! close agri file 
+      call H5Fclose_f(fhnd1,iret)   
+   
+   ! open geo HDF5 file for read
+      call H5Fopen_f(fname_geo(ifile),H5F_ACC_RDONLY_F,fhnd1,iret,H5P_DEFAULT_F)                                    
+        if(iret.lt.0)then                                                                                            
+           call da_warning(__FILE__,__LINE__, &
+              (/"Cannot open HDF5 file "//trim(fname_geo(ifile))/))
+           cycle infile_loop
+        end if  
+   ! read line number 
+      call h5dopen_f(fhnd1,"LineNumber",dhnd1,iret)
+        sz1(1)=nscan
+        sz1(2)=fov
+      call h5dread_f(dhnd1,H5T_NATIVE_Integer,l(:,:),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+        if(iret.lt.0)then
+           call da_warning(__FILE__,__LINE__, &
+                  (/"HDF5 read error for:line number "/))   
+        end if
+      call h5dclose_f(dhnd1,iret)
+   ! read column number  
+      call h5dopen_f(fhnd1,"ColumnNumber",dhnd1,iret)
+        sz1(1)=nscan
+        sz1(2)=fov
+      call h5dread_f(dhnd1,H5T_NATIVE_Integer,c(:,:),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+        if(iret.lt.0)then
+           call da_warning(__FILE__,__LINE__, &
+                  (/"HDF5 read error for: column number"/)) 
+        end if
+      call h5dclose_f(dhnd1,iret)
+      write(unit=stdout,fmt=*) c(1000,1009),c(999,1009),l(1000,1008),l(999,1008)
+   ! calculate lat lon
+    do iscan=1,nscan
+      do ifov=1,fov
+        x1=pai*(c(ifov,iscan)-COFF)/(180*CFAC)*(2**16)
+        y1=pai*(l(ifov,iscan)-LOFF)/(180*LFAC)*(2**16)
+        sd=((h*cos(x1)*cos(y1))**2-(cos(y1)**2+ea**2/(eb**2)*(sin(y1)**2))*(h**2-ea**2))**(1./2.)
+        sn=(h*cos(x1)*cos(y1)-sd)/(cos(y1)**2+ea**2/(eb**2)*sin(y1)**2)
+        s1=h-sn*cos(x1)*cos(y1)
+        s2=sn*sin(x1)*cos(y1)
+        s3=-sn*sin(y1)
+        sxy=(s1**2+s2**2)**(1./2.)
+        lon(ifov,iscan)=180./pai*atan(s2/s1)+cetlon
+        lat(ifov,iscan)=180./pai*atan(ea**2/(eb**2)*(s3/sxy))
+      end do
+    end do
+  ! sample play 
+      write(unit=stdout,fmt=*) lat(1373,1374),lon(1373,1374)
+      write(unit=stdout,fmt=*) lat(1250,1250),lon(1250,1250)  
+  
+  ! read array: satellite zenith                                                 
+  ! read
+      call H5Dopen_f(fhnd1, &
+         'NOMSatelliteZenith',dhnd1,iret)
+       sz1(1)=nscan
+       sz1(2)=fov
+      call H5Dread_f(dhnd1, &
+         H5T_NATIVE_REAL,sat_zen(:,:),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+        if(iret.lt.0)then
+           call da_warning(__FILE__,__LINE__, &
+             (/"HDF5 read error for: satellite zenith"/))
+        endif
+      call H5Dclose_f(dhnd1,iret)
+  ! sample play
+      write(unit=stdout,fmt=*)'sat_zen(pixel=1000,scan=1000): ',sat_zen(1000,1000)
+
+  ! read array: sun zenith                                          
+      call H5Dopen_f(fhnd1, &
+         'NOMSunZenith',dhnd1,iret)
+        sz1(1)=nscan
+        sz1(2)=fov
+      call H5Dread_f(dhnd1, &
+         H5T_NATIVE_REAL,sun_zen(:,:),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+        if(iret.lt.0)then
+          call da_warning(__FILE__,__LINE__, &
+            (/"HDF5 read error for: Sun zenith"/))
+        endif
+      call H5Dclose_f(dhnd1,iret)
+   ! sample display
+      write(unit=stdout,fmt=*)'sun_zen(pixel=1000,scan=1000): ',sun_zen(1000,1000)
+     
+   ! read array: Satellite azimuth                                                     
+   ! read
+      call H5Dopen_f(fhnd1, &
+         'NOMSatelliteAzimuth',dhnd1,iret)
+        sz1(1)=nscan
+        sz1(2)=fov
+      call H5Dread_f(dhnd1, &
+         H5T_NATIVE_REAL,sat_az(:,:),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+        if(iret.lt.0)then
+          call da_warning(__FILE__,__LINE__, &
+            (/"HDF5 read error for: NOMSatelliteAzimuth"/))
+        endif
+      call H5Dclose_f(dhnd1,iret)
+   ! sample play     
+       write(unit=stdout,fmt=*)'sat_az(pixel=1000,scan=1000): ',sat_az(1000,1000)
+     
+   ! read array: Sun azimuth                                                     
+   ! read
+      call H5Dopen_f(fhnd1, &
+         'NOMSunAzimuth',dhnd1,iret)
+        sz1(1)=nscan
+        sz1(2)=fov
+      call H5Dread_f(dhnd1, &
+         H5T_NATIVE_REAL,sun_az(:,:),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+        if(iret.lt.0)then
+          call da_warning(__FILE__,__LINE__, &
+            (/"HDF5 read error for: NOMSunAzimuth"/))
+        endif
+      call H5Dclose_f(dhnd1,iret)
+   ! sample play      
+       write(unit=stdout,fmt=*)'sun_az(pixel=1000,scan=1000): ',sun_az(1000,1000)
+	
+   ! read array: sun glint angle
+     allocate(sunglint(fov,nscan))
+	call h5dopen_f(fhnd1,"NOMSunGlintAngle",dhnd1,iret)
+      sz1(1)=nscan
+      sz1(2)=fov
+    call h5dread_f(dhnd1,H5T_NATIVE_REAL,sunglint(:,:),sz1,iret,H5S_ALL_F,H5S_ALL_F)
+       if(iret.lt.0)then
+	   call da_warning(__FILE__,__LINE__, &
+            (/"HDF5 read error for:sun glint angle"/))     
+       endif
+    call h5dclose_f(dhnd1,iret)
+   ! sample play      
+       write(unit=stdout,fmt=*)'sunglint(pixel=1000,scan=1000): ',sunglint(1000,1000)
+
+   ! close file and HDF5
+      call H5Fclose_f(fhnd1,iret)  
 	  
+   ! open clm.nc file for read
+   ! read CLM
+      ierr=nf_open(fname_clm(ifile), nf_nowrite, ncid)
+      ierr=nf_inq_varid (ncid, 'CLM', varid)
+      ierr=nf_get_var (ncid,varid,clm)
+         if(ierr.ne.0)then
+           call da_warning(__FILE__,__LINE__, &
+             (/"nc file read error for: CLM"/))
+         end if
+   !sample play
+      write(unit=stdout,fmt=*) 'clm(scan=1544,pixel=605)',clm(605,1544)
+     ierr=nf_close(varid)
+     ierr=nf_close(ncid)
+
 ! 2.0 Loop to read hdf file and assign information to a sequential structure
 !-------------------------------------------------------------------------
 
@@ -367,52 +511,40 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
          p => head
          head_allocated = .true.
       end if
-
-   ! start scan_loop
-      scan_loop:     do ilatitude=1, nlatitude	 
-
-         call da_get_julian_time(idate5(1),idate5(2),idate5(3),idate5(4),idate5(5),obs_time)
-		 
-         if ( obs_time < time_slots(0) .or. obs_time >= time_slots(num_fgat_time) ) cycle scan_loop
+      
+      
+   ! start scan_loop                                              
+      scan_loop:     do iscan=1, nscan
+	  
+         if(int_time(1,iscan) .eq. 9999) cycle scan_loop
+         do i = 1, 6
+           idate5(i)=obstime(i, iscan)
+         end do
+         call da_get_julian_time(idate5(1),idate5(2),idate5(3),idate5(4),idate5(5),obs_time)                       
+         if ( obs_time < time_slots(0) .or.  &
+            obs_time >= time_slots(num_fgat_time) ) cycle scan_loop
          do ifgat=1,num_fgat_time
-            if ( obs_time >= time_slots(ifgat-1) .and. obs_time  < time_slots(ifgat) ) exit
+            if ( obs_time >= time_slots(ifgat-1) .and.  &
+               obs_time  < time_slots(ifgat) ) exit
          end do
 
-      ! start fov_loop: longitude
-         fov_loop:      do ilongitude=1, nlongitude
-			
-			if ( sat_zenith(ilongitude,ilatitude) > 65.0 ) cycle fov_loop
-			
+      ! start fov_loop                                   
+         fov_loop:      do ifov=1,fov
             num_agri_file       = num_agri_file + 1
             num_agri_file_local = num_agri_file_local + 1
-			
-			latlonsd00=1.0 !to be modified
-			
-			!caculation the latitude and longitude
-			latlonx=(ColumnNumber(ilongitude,ilatitude)-1373.5)*(65536*3.1415926)/(180*10233137)
-			latlony=(LineNumber(ilongitude,ilatitude)-1373.5)*(65536*3.1415926)/(180*10233137)
-			latlonsd1=cos(latlony)**2+sin(latlony)**2*1.0067395
-			latlonsd2=42164*cos(latlonx)*cos(latlony)
-			latlonsd3=latlonsd2**2-(42164**2-6378.137**2)*(latlonsd1)
-			latlonsd=sqrt(latlonsd3)
-			latlonsn=(42164*cos(latlonx)*cos(latlony)-latlonsd)/(latlonsd00)
-			latlons1=42164-latlonsn*cos(latlonx)*cos(latlony)
-			latlons2=latlonsn*sin(latlonx)*cos(latlony)
-			latlons3=-latlonsn*sin(latlony)
-			latlonsxy=sqrt(latlons1**2+latlons2**2)
-			vlatitude(ilongitude,ilatitude)=57.2957805*atand(latlons3/latlonsxy*1.0067395)
-			vlongitude(ilongitude,ilatitude)=57.2957805*atand(latlons2/latlons1)+104.7
-			
-            info%lat  =  vlatitude(ilongitude,ilatitude)
-            info%lon  =  vlongitude(ilongitude,ilatitude)
-
-            call da_llxy (info, loc, outside, outside_all)
+            info%lat  =  lat(ifov,iscan)                              
+            info%lon  =  lon(ifov,iscan)
+            call da_llxy (info, loc, outside, outside_all)                        
             if (outside_all) cycle fov_loop
-
+            
             num_agri_global       = num_agri_global + 1
             num_agri_global_local = num_agri_global_local + 1
             ptotal(ifgat) = ptotal(ifgat) + 1
             if (outside) cycle fov_loop   ! No good for this PE
+            
+         ! Discard data over Land (before:landmask =1 -->Land or =0 -->Sea;after:landmask =0 -->Land or =1 -->Sea)                                              !   landsea_mask = 0                                         !!!!!land
+         !   if(lof(ifov,iscan) .eq. 0 ) landsea_mask = 1             !!!!!sea
+         !   if( landsea_mask == 0 ) cycle fov_loop
 
             num_agri_local       = num_agri_local + 1
             num_agri_local_local = num_agri_local_local + 1
@@ -420,17 +552,17 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
             fmt='(i4.4,a,i2.2,a,i2.2,a,i2.2,a,i2.2,a,i2.2)')  &
                idate5(1), '-', idate5(2), '-', idate5(3), '_', idate5(4), &
                ':', idate5(5), ':', idate5(6)
-            info%elv = 0.0				
+            info%elv = 0.0
 
-! 3.0  Make Thinning
+! 3.0  Make Thinning                                                 
 ! Map obs to thinning grid
 !-------------------------------------------------------------------
             if (thinning) then
-               dlat_earth = info%lat !degree
+               dlat_earth = info%lat               !degree
                dlon_earth = info%lon
                if (dlon_earth<zero)  dlon_earth = dlon_earth+r360
                if (dlon_earth>=r360) dlon_earth = dlon_earth-r360
-               dlat_earth = dlat_earth*deg2rad !radian
+               dlat_earth = dlat_earth*deg2rad             !radian           
                dlon_earth = dlon_earth*deg2rad
                crit = 1.
                call map2grids(inst,ifgat,dlat_earth,dlon_earth,crit,iobs,itx,1,itt,iout,iuse)
@@ -440,70 +572,47 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
                end if
             end if
 
-            num_agri_used = num_agri_used + 1
-            data_all = missing_r		
-
-            tb = tb07(ilongitude,ilatitude) / tb_scale
-            if( tb < tbmin .or. tb > tbmax ) tb = missing_r
-            data_all(1)= tb 
-
-            tb = tb08(ilongitude,ilatitude) / tb_scale
-            if( tb < tbmin .or. tb > tbmax ) tb = missing_r
-            data_all(2)= tb 
-			
-			tb = tb09(ilongitude,ilatitude) / tb_scale
-            if( tb < tbmin .or. tb > tbmax ) tb = missing_r
-            data_all(3)= tb 
-
-            tb = tb10(ilongitude,ilatitude) / tb_scale
-            if( tb < tbmin .or. tb > tbmax ) tb = missing_r
-            data_all(4)= tb 
-
-            tb = tb11(ilongitude,ilatitude) / tb_scale
-            if( tb < tbmin .or. tb > tbmax ) tb = missing_r
-            data_all(5)= tb
-			
-			tb = tb12(ilongitude,ilatitude) / tb_scale
-            if( tb < tbmin .or. tb > tbmax ) tb = missing_r
-            data_all(6)= tb
-
-            tb = tb13(ilongitude,ilatitude) / tb_scale
-            if( tb < tbmin .or. tb > tbmax ) tb = missing_r
-            data_all(7)= tb
-
-            tb = tb14(ilongitude,ilatitude) / tb_scale
-            if( tb < tbmin .or. tb > tbmax ) tb = missing_r
-            data_all(8)= tb		
-
+            num_agri_used = num_agri_used + 1                                    
+            data_all = missing_r
+      
+            do k=1,7
+               tb1 = tb(ifov,iscan,k)
+               if( tb1 < tbmin .or. tb1 > tbmax ) tb1 = missing_r
+               data_all(k)= tb1
+            end do
 ! 4.0 assign information to sequential radiance structure
 !--------------------------------------------------------------------------
             allocate ( p % tb_inv (1:nchan ))
-            p%info             = info
-            p%loc              = loc
-            p%landsea_mask     = 1
-            p%scanpos          = ilongitude !nint(sat_zenith(ilongitude,ilatitude))+1.001_r_kind !
-            p%satzen           = sat_zenith(ilongitude,ilatitude)
-            p%satazi           = 0
-            p%solzen           = 0
-            p%solazi           = 0
-			p%cloudflag        = cloud_mask(ilongitude,ilatitude)
+            p%info             = info            
+            p%loc              = loc         
+            p%landsea_mask     = 1                
+            p%scanpos          = ifov          
+            p%satzen           = sat_zen(ifov,iscan)
+            p%solzen           = sun_zen(ifov,iscan)
+            p%satazi           = sat_az(ifov,iscan)
+            p%solazi           = sun_az(ifov,iscan)
             p%tb_inv(1:nchan)  = data_all(1:nchan)
             p%sensor_index     = inst
             p%ifgat            = ifgat
-
+            p%cloudflag        = clm(ifov,iscan)
+            p%sun_glint        = sunglint(ifov,iscan)
+			
             allocate (p%next)   ! add next data
             p => p%next
             nullify (p%next)
          end do fov_loop
       end do scan_loop
+   ! Dellocate arrays
+      deallocate  (obstime)
+      deallocate  (sunglint)
 
       write(stdout,fmt='(3a,i7)') ' In file: ',trim(fname_tb(ifile)),' got num_agri_file    : ',num_agri_file_local
       write(stdout,fmt='(3a,i7)') ' In file: ',trim(fname_tb(ifile)),' got num_agri_global  : ',num_agri_global_local
       write(stdout,fmt='(3a,i7)') ' In file: ',trim(fname_tb(ifile)),' got num_agri_local   : ',num_agri_local_local
    end do infile_loop
- 
-   close(1990) !close date information file
+
    call H5close_f(iret)
+
    deallocate(data_all) ! Deallocate data arrays
 
    if (thinning .and. num_agri_global > 0 ) then
@@ -526,7 +635,7 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
       call mpi_reduce(in, out, j, true_mpi_real, mpi_min, root, comm, ierr)
 
       call wrf_dm_bcast_real (out, j)
-	  
+
       j = 0
       do ifgat = 1, num_fgat_time
          do i = 1, thinning_grid(inst,ifgat)%itxmax
@@ -608,13 +717,12 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
       call da_warning(__FILE__,__LINE__,message(1:1))
    endif
 
-   write(unit=stdout,fmt='(a)') 'AHI data counts: '
-   write(stdout,fmt='(a,i7)') ' In file: ',num_agri_file
+   write(unit=stdout,fmt='(a)') 'fy4 agri data counts: '
+   write(stdout,fmt='(a,i10)') ' In file: ',num_agri_file
    write(stdout,fmt='(a,i7)') ' Global : ',num_agri_global
    write(stdout,fmt='(a,i7)') ' Local  : ',num_agri_local
    write(stdout,fmt='(a,i7)') ' Used   : ',num_agri_used
    write(stdout,fmt='(a,i7)') ' Thinned: ',num_agri_thinned
-
 
 !  5.0 allocate innovation radiance structure
 !----------------------------------------------------------------
@@ -643,7 +751,6 @@ subroutine da_read_obs_hdf5agri (iv,infile_tb,infile_clp)
    end do
    deallocate ( p )
    deallocate (ptotal)
-
    if (trace_use) call da_trace_exit("da_read_obs_hdf5agri")
 #else
    call da_error(__FILE__,__LINE__,(/"Needs to be compiled with HDF5 library"/))
